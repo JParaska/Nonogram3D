@@ -3,7 +3,12 @@
 
 #include "Nonogram.h"
 
+#include "N3DGameInstance.h"
+#include "N3DNonogramInput.h"
+
 #include "Components/InstancedStaticMeshComponent.h"
+#include "EnhancedInputComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ANonogram::ANonogram()
 {
@@ -11,6 +16,21 @@ ANonogram::ANonogram()
 
 	CubeInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Cubes"));
 	RootComponent = CubeInstances;
+}
+
+void ANonogram::EnableInput(APlayerController* PlayerController)
+{
+	Super::EnableInput(PlayerController);
+
+	if (NonogramInput)
+	{
+		if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+		{
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionX, ETriggerEvent::Started, this, &ThisClass::SelectionX);
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionY, ETriggerEvent::Started, this, &ThisClass::SelectionY);
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionZ, ETriggerEvent::Started, this, &ThisClass::SelectionZ);
+		}
+	}
 }
 
 void ANonogram::BeginPlay()
@@ -22,11 +42,14 @@ void ANonogram::BeginPlay()
 		return;
 	}
 
-	// TODO register
+	if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GameInstance->SetActiveNonogram(this);
+	}
 
 	// TODO get puzzle info
 
-	/// Temp
+	/// Temp, setup nonogram based on current puzzle info
 	const int Size = 10;
 	for (uint8 x = 0; x < Size; x++)
 	{
@@ -40,5 +63,20 @@ void ANonogram::BeginPlay()
 			}
 		}
 	}
+}
+
+void ANonogram::SelectionX(const FInputActionValue& Input)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SelectionX %s"), *Input.ToString());
+}
+
+void ANonogram::SelectionY(const FInputActionValue& Input)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SelectionY %s"), *Input.ToString());
+}
+
+void ANonogram::SelectionZ(const FInputActionValue& Input)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SelectionZ %s"), *Input.ToString());
 }
 

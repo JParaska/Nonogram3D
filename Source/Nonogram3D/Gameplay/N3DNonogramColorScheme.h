@@ -49,4 +49,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FN3DColorScheme EmptyInactive;
+
+	UPROPERTY(EditAnywhere)
+	FN3DColorScheme Deactivated;
 };

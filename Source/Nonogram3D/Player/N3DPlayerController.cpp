@@ -3,11 +3,14 @@
 
 #include "N3DPlayerController.h"
 
+#include "N3DGameInstance.h"
 #include "N3DPlayerInput.h"
+#include "Nonogram.h"
 
 #include "InputTriggers.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Kismet/GameplayStatics.h"
 
 void AN3DPlayerController::SetupInputComponent()
 {
@@ -38,6 +41,22 @@ void AN3DPlayerController::SetupInputComponent()
 	}
 }
 
+void AN3DPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this))) {
+		if (GameInstance->GetActiveNonogram() && !GameInstance->GetActiveNonogram()->IsActorBeingDestroyed())
+		{
+			GameInstance->GetActiveNonogram()->EnableInput(this);
+		}
+		else
+		{
+			GameInstance->OnNonogramSet.BindUObject(this, &ThisClass::OnNonogramSet);
+		}
+	}
+}
+
 void AN3DPlayerController::TriggerLookAround(const FInputActionValue& Input)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Trigger look around %s"), *Input.ToString());
@@ -56,5 +75,13 @@ void AN3DPlayerController::LookAround(const FInputActionValue& Input)
 		const FVector2D Direction = Input.Get<FVector2D>();
 		AddYawInput(Direction.X);
 		AddPitchInput(-Direction.Y);
+	}
+}
+
+void AN3DPlayerController::OnNonogramSet(ANonogram* Nonogram)
+{
+	if (ensure(Nonogram))
+	{
+		Nonogram->EnableInput(this);
 	}
 }
