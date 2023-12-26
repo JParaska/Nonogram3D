@@ -19,7 +19,7 @@ class NONOGRAM3D_API ANonogram : public AActor
 
 protected:
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Scene")
 	TObjectPtr<UInstancedStaticMeshComponent> CubeInstances;
 
 	UPROPERTY(VisibleAnywhere)
