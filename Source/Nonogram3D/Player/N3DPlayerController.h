@@ -7,7 +7,7 @@
 #include "InputActionValue.h"
 #include "N3DPlayerController.generated.h"
 
-class ANonogram;
+class AN3DNonogram;
 class UN3DPlayerInput;
 
 class UInputMappingContext;
@@ -50,7 +50,7 @@ protected:
 	void LookAround(const FInputActionValue& Input);
 
 	UFUNCTION()
-	void OnNonogramSet(ANonogram* Nonogram);
+	void OnNonogramSet(AN3DNonogram* Nonogram);
 #pragma endregion
 	
 };

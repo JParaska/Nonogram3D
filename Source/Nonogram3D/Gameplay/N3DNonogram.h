@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Nonogram.generated.h"
+#include "N3DNonogram.generated.h"
 
 class UN3DNonogramColorScheme;
 class UN3DNonogramInput;
@@ -13,7 +13,7 @@ class APlayerController;
 class UInstancedStaticMeshComponent;
 
 UCLASS()
-class NONOGRAM3D_API ANonogram : public AActor
+class NONOGRAM3D_API AN3DNonogram : public AActor
 {
 	GENERATED_BODY()
 
@@ -40,7 +40,7 @@ protected:
 	
 public:	
 	
-	ANonogram();
+	AN3DNonogram();
 
 	virtual void EnableInput(class APlayerController* PlayerController) override;
 

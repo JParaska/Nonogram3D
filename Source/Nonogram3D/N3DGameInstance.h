@@ -6,9 +6,9 @@
 #include "Engine/GameInstance.h"
 #include "N3DGameInstance.generated.h"
 
-class ANonogram;
+class AN3DNonogram;
 
-DECLARE_DELEGATE_OneParam(FOnNonogramSet, ANonogram*);
+DECLARE_DELEGATE_OneParam(FOnNonogramSet, AN3DNonogram*);
 
 UCLASS()
 class NONOGRAM3D_API UN3DGameInstance : public UGameInstance
@@ -22,14 +22,14 @@ public:
 
 protected:
 
-	TObjectPtr<ANonogram> Nonogram;
+	TObjectPtr<AN3DNonogram> Nonogram;
 #pragma endregion
 
 #pragma region Methods
 public:
 
-	ANonogram* GetActiveNonogram() const { return Nonogram; }
+	AN3DNonogram* GetActiveNonogram() const { return Nonogram; }
 
-	void SetActiveNonogram(ANonogram* ActiveNonogram);
+	void SetActiveNonogram(AN3DNonogram* ActiveNonogram);
 #pragma endregion
 };

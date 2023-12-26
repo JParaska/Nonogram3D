@@ -5,7 +5,7 @@
 
 #include "N3DGameInstance.h"
 #include "N3DPlayerInput.h"
-#include "Nonogram.h"
+#include "N3DNonogram.h"
 
 #include "InputTriggers.h"
 #include "EnhancedInputComponent.h"
@@ -78,7 +78,7 @@ void AN3DPlayerController::LookAround(const FInputActionValue& Input)
 	}
 }
 
-void AN3DPlayerController::OnNonogramSet(ANonogram* Nonogram)
+void AN3DPlayerController::OnNonogramSet(AN3DNonogram* Nonogram)
 {
 	if (ensure(Nonogram))
 	{

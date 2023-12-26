@@ -1,7 +1,7 @@
 // Created by Jan Paraska. All rights reserved
 
 
-#include "Nonogram.h"
+#include "N3DNonogram.h"
 
 #include "N3DGameInstance.h"
 #include "N3DNonogramInput.h"
@@ -10,7 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-ANonogram::ANonogram()
+AN3DNonogram::AN3DNonogram()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -18,7 +18,7 @@ ANonogram::ANonogram()
 	RootComponent = CubeInstances;
 }
 
-void ANonogram::EnableInput(APlayerController* PlayerController)
+void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 {
 	Super::EnableInput(PlayerController);
 
@@ -33,7 +33,7 @@ void ANonogram::EnableInput(APlayerController* PlayerController)
 	}
 }
 
-void ANonogram::BeginPlay()
+void AN3DNonogram::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -65,17 +65,17 @@ void ANonogram::BeginPlay()
 	}
 }
 
-void ANonogram::SelectionX(const FInputActionValue& Input)
+void AN3DNonogram::SelectionX(const FInputActionValue& Input)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SelectionX %s"), *Input.ToString());
 }
 
-void ANonogram::SelectionY(const FInputActionValue& Input)
+void AN3DNonogram::SelectionY(const FInputActionValue& Input)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SelectionY %s"), *Input.ToString());
 }
 
-void ANonogram::SelectionZ(const FInputActionValue& Input)
+void AN3DNonogram::SelectionZ(const FInputActionValue& Input)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SelectionZ %s"), *Input.ToString());
 }

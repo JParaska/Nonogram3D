@@ -2,7 +2,7 @@
 
 #include "N3DGameInstance.h"
 
-void UN3DGameInstance::SetActiveNonogram(ANonogram* ActiveNonogram)
+void UN3DGameInstance::SetActiveNonogram(AN3DNonogram* ActiveNonogram)
 {
 	Nonogram = ActiveNonogram;
 	OnNonogramSet.ExecuteIfBound(Nonogram);
