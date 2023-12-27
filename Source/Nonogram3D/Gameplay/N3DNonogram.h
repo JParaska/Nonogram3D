@@ -70,6 +70,8 @@ protected:
 
 	TPair<ESelectionType, int> CurrentSelection;
 
+	TObjectPtr<APlayerController> Controller;
+
 #pragma endregion
 	
 public:	
@@ -90,6 +92,9 @@ protected:
 
 	UFUNCTION()
 	void SelectionZ(const FInputActionValue& Input);
+
+	UFUNCTION()
+	void SelectCube();
 
 private:
 

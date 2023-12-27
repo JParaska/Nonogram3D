@@ -22,9 +22,6 @@ public:
 	TObjectPtr<UInputAction> TriggerLookAround;
 
 	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> SelectCube;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> LookAround;
 	
 };

@@ -44,9 +44,6 @@ protected:
 	void TriggerLookAround(const FInputActionValue& Input);
 
 	UFUNCTION()
-	void SelectCube();
-
-	UFUNCTION()
 	void LookAround(const FInputActionValue& Input);
 
 	UFUNCTION()

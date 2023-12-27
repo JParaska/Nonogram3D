@@ -22,6 +22,8 @@ AN3DNonogram::AN3DNonogram()
 void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 {
 	Super::EnableInput(PlayerController);
+	
+	Controller = PlayerController;
 
 	if (NonogramInput)
 	{
@@ -30,6 +32,7 @@ void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionX, ETriggerEvent::Started, this, &ThisClass::SelectionX);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionY, ETriggerEvent::Started, this, &ThisClass::SelectionY);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionZ, ETriggerEvent::Started, this, &ThisClass::SelectionZ);
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectCube, ETriggerEvent::Started, this, &ThisClass::SelectCube);
 		}
 	}
 }
@@ -94,6 +97,55 @@ void AN3DNonogram::SelectionY(const FInputActionValue& Input)
 void AN3DNonogram::SelectionZ(const FInputActionValue& Input)
 {
 	SelectNext(ESelectionType::Z, Input.Get<float>() > 0);
+}
+
+void AN3DNonogram::SelectCube()
+{
+	if (Controller && Controller->bShowMouseCursor)
+	{
+		FVector WorldLocation;
+		FVector WorldDirection;
+		if (Controller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		{
+			const int32 InstanceIndex = *SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane.CreateIterator();
+			FTransform PlaneBase;
+			
+			// This value will lead to errors, when selecting a cube from sharp angle
+			// TODO offset the PlaneBase +-50.0f and check against two planes, then check which one is closer to mouse world position
+			if (CubeInstances->GetInstanceTransform(InstanceIndex, PlaneBase, true))
+			{
+				FVector PlaneForward;
+				switch (CurrentSelection.Key)
+				{
+				case ESelectionType::X:
+					PlaneForward = FVector(1, 0, 0);
+					break;
+				case ESelectionType::Y:
+					PlaneForward = FVector(0, 1, 0);
+					break;
+				case ESelectionType::Z:
+					PlaneForward = FVector(0, 0, 1);
+					break;
+				default:
+					return;
+				}
+
+				FPlane Plane = FPlane(PlaneBase.GetLocation(), PlaneForward);
+				const FVector MousePoint = FMath::RayPlaneIntersection(WorldLocation, WorldDirection, Plane) / 100.0f;
+
+				FIntVector InstanceCoords;
+				InstanceCoords.X = FMath::RoundToInt(MousePoint.X);
+				InstanceCoords.Y = FMath::RoundToInt(MousePoint.Y);
+				InstanceCoords.Z = FMath::RoundToInt(MousePoint.Z);
+
+				if (Cubes.Contains(InstanceCoords))
+				{
+					CubeInstances->SetCustomData(Cubes[InstanceCoords], ColorScheme->FilledActive.Get());
+					CubeInstances->MarkRenderStateDirty();
+				}
+			}
+		}
+	}
 }
 
 void AN3DNonogram::ResetSelectionCollection(const FIntVector& Size)

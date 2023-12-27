@@ -33,8 +33,7 @@ void AN3DPlayerController::SetupInputComponent()
 		{
 			PlayerEnhancedInputComponent->BindAction(PlayerInputConfig->TriggerLookAround, ETriggerEvent::Started, this, &ThisClass::TriggerLookAround);
 			PlayerEnhancedInputComponent->BindAction(PlayerInputConfig->TriggerLookAround, ETriggerEvent::Completed, this, &ThisClass::TriggerLookAround);
-
-			PlayerEnhancedInputComponent->BindAction(PlayerInputConfig->SelectCube, ETriggerEvent::Started, this, &ThisClass::SelectCube);
+			PlayerEnhancedInputComponent->BindAction(PlayerInputConfig->TriggerLookAround, ETriggerEvent::Canceled, this, &ThisClass::TriggerLookAround);
 
 			PlayerEnhancedInputComponent->BindAction(PlayerInputConfig->LookAround, ETriggerEvent::Triggered, this, &ThisClass::LookAround);
 		}
@@ -55,22 +54,19 @@ void AN3DPlayerController::BeginPlay()
 			GameInstance->OnNonogramSet.BindUObject(this, &ThisClass::OnNonogramSet);
 		}
 	}
+
+	bShowMouseCursor = true;
 }
 
 void AN3DPlayerController::TriggerLookAround(const FInputActionValue& Input)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Trigger look around %s"), *Input.ToString());
-}
-
-void AN3DPlayerController::SelectCube()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Input pressed to select cude under cursor from selected plane"));
+	bShowMouseCursor = !Input.Get<bool>();
 }
 
 void AN3DPlayerController::LookAround(const FInputActionValue& Input)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Look around %s"), *Input.ToString());
-	if (Input.GetMagnitude() > 0)
+	if (Input.GetMagnitude() > 0 && !bShowMouseCursor)
 	{
 		const FVector2D Direction = Input.Get<FVector2D>();
 		AddYawInput(Direction.X);
