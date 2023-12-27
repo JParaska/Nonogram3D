@@ -26,6 +26,8 @@ struct FN3DColorScheme {
 	// Per instance custom data 5
 	UPROPERTY(EditAnywhere)
 	float EdgeSubtraction = 0.1f;
+
+	TArray<float> Get() const;
 };
 
 /**

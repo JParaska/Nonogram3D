@@ -12,6 +12,32 @@ class UN3DNonogramInput;
 class APlayerController;
 class UInstancedStaticMeshComponent;
 
+UENUM(BlueprintType)
+enum class ESelectionType : uint8
+{
+	X,
+	Y,
+	Z
+};
+
+USTRUCT(BlueprintType)
+struct FSelectionPlane
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	TSet<int> Plane;
+};
+
+USTRUCT(BlueprintType)
+struct FSelectionCollection
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	TMap<int, FSelectionPlane> Collection;
+};
+
 UCLASS()
 class NONOGRAM3D_API AN3DNonogram : public AActor
 {
@@ -24,9 +50,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Scene")
 	TObjectPtr<UInstancedStaticMeshComponent> CubeInstances;
 
-	UPROPERTY(VisibleAnywhere)
-	TMap<FIntVector, int> Cubes;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Setup")
 	FVector CubeScale = FVector(0.99f);
 
@@ -35,6 +58,17 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UN3DNonogramInput> NonogramInput;
+
+	UPROPERTY(VisibleAnywhere)
+	FIntVector CurrentSize;
+
+	UPROPERTY(VisibleAnywhere)
+	TMap<FIntVector, int> Cubes;
+
+	UPROPERTY(VisibleAnywhere)
+	TMap<ESelectionType, FSelectionCollection> SelectionCollection;
+
+	TPair<ESelectionType, int> CurrentSelection;
 
 #pragma endregion
 	
@@ -56,4 +90,16 @@ protected:
 
 	UFUNCTION()
 	void SelectionZ(const FInputActionValue& Input);
+
+private:
+
+	void ResetSelectionCollection(const FIntVector& Size);
+
+	FSelectionCollection CreateSelectionCollection(const int Size);
+
+	void AddInstanceToCollection(const FIntVector& Index, const int InstanceIndex);
+
+	void SelectNext(const ESelectionType Selection, const bool bNext);
+
+	void Select(const ESelectionType Selection, const int Index);
 };
