@@ -72,6 +72,9 @@ protected:
 
 	TObjectPtr<APlayerController> Controller;
 
+	TMap<int32, FColor> CurrentSolution;
+	TSet<int32> SelectedCubes;
+
 #pragma endregion
 	
 public:	
@@ -107,4 +110,7 @@ private:
 	void SelectNext(const ESelectionType Selection, const bool bNext);
 
 	void Select(const ESelectionType Selection, const int Index);
+
+	/** Returns true if all (and only) cubes in solution are selected */
+	bool CheckSolution() const;
 };

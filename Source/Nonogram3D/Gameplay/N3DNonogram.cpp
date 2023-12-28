@@ -107,12 +107,12 @@ void AN3DNonogram::SelectCube()
 		FVector WorldDirection;
 		if (Controller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
 		{
-			const int32 InstanceIndex = *SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane.CreateIterator();
+			const int32 FirstInstanceInSelectedPlane = *SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane.CreateIterator();
 			FTransform PlaneBase;
 			
 			// This value will lead to errors, when selecting a cube from sharp angle
 			// TODO offset the PlaneBase +-50.0f and check against two planes, then check which one is closer to mouse world position
-			if (CubeInstances->GetInstanceTransform(InstanceIndex, PlaneBase, true))
+			if (CubeInstances->GetInstanceTransform(FirstInstanceInSelectedPlane, PlaneBase, true))
 			{
 				FVector PlaneForward;
 				switch (CurrentSelection.Key)
@@ -140,8 +140,19 @@ void AN3DNonogram::SelectCube()
 
 				if (Cubes.Contains(InstanceCoords))
 				{
-					CubeInstances->SetCustomData(Cubes[InstanceCoords], ColorScheme->FilledActive.Get());
+					const int32 InstanceIndex = Cubes[InstanceCoords];
+					CubeInstances->SetCustomData(InstanceIndex, ColorScheme->FilledActive.Get());
 					CubeInstances->MarkRenderStateDirty();
+
+					if (SelectedCubes.Contains(InstanceIndex))
+					{
+						SelectedCubes.Remove(InstanceIndex);
+					}
+					else
+					{
+						SelectedCubes.Add(InstanceIndex);
+					}
+					CheckSolution();
 				}
 			}
 		}
@@ -225,19 +236,39 @@ void AN3DNonogram::Select(const ESelectionType Selection, const int Index)
 {
 	// Deselect previouus
 	const TArray<float> EmptyInactive = ColorScheme->EmptyInactive.Get();
+	const TArray<float> FilledInactive = ColorScheme->FilledInactive.Get();
 	for (int32 InstanceIndex : SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane)
 	{
-		CubeInstances->SetCustomData(InstanceIndex, EmptyInactive);
+		CubeInstances->SetCustomData(InstanceIndex, SelectedCubes.Contains(InstanceIndex) ? FilledInactive : EmptyInactive);
 	}
 
 	// Select new
 	const TArray<float> EmptyActive = ColorScheme->EmptyActive.Get();
+	const TArray<float> FilledActive = ColorScheme->FilledActive.Get();
 	for (int32 InstanceIndex : SelectionCollection[Selection].Collection[Index].Plane)
 	{
-		CubeInstances->SetCustomData(InstanceIndex, EmptyActive); // TODO filled cube have different data
+		CubeInstances->SetCustomData(InstanceIndex, SelectedCubes.Contains(InstanceIndex) ? FilledActive : EmptyActive);
 	}
 
 	CubeInstances->MarkRenderStateDirty();
 
 	CurrentSelection = { Selection, Index };
+}
+
+bool AN3DNonogram::CheckSolution() const
+{
+	if (SelectedCubes.Num() != CurrentSolution.Num())
+	{
+		return false;
+	}
+
+	for (const int32 InstanceIndex : SelectedCubes)
+	{
+		if (!CurrentSolution.Contains(InstanceIndex))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
