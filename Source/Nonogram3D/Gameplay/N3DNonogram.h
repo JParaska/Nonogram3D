@@ -10,6 +10,7 @@ class UN3DNonogramColorScheme;
 class UN3DNonogramInput;
 
 class APlayerController;
+class UDataTable;
 class UInstancedStaticMeshComponent;
 
 UENUM(BlueprintType)
@@ -56,6 +57,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup")
 	TObjectPtr<UN3DNonogramColorScheme> ColorScheme;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Setup")
+	TObjectPtr<UDataTable> TestSolution; // TODO remove
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UN3DNonogramInput> NonogramInput;
 
@@ -81,7 +85,7 @@ public:
 	
 	AN3DNonogram();
 
-	virtual void EnableInput(class APlayerController* PlayerController) override;
+	virtual void EnableInput(APlayerController* PlayerController) override;
 
 protected:
 	
@@ -110,6 +114,8 @@ private:
 	void SelectNext(const ESelectionType Selection, const bool bNext);
 
 	void Select(const ESelectionType Selection, const int Index);
+
+	void SetSolution(UDataTable* SolutionDataTable);
 
 	/** Returns true if all (and only) cubes in solution are selected */
 	bool CheckSolution() const;

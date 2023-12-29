@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "InputActionValue.h"
 #include "N3DPlayerController.generated.h"
 
 class AN3DNonogram;
@@ -25,9 +24,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> PlayerInputMappingContext;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TObjectPtr<UN3DPlayerInput> PlayerInputConfig;
 #pragma endregion
 
 #pragma region Methods
@@ -40,14 +36,6 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void TriggerLookAround(const FInputActionValue& Input);
-
-	UFUNCTION()
-	void LookAround(const FInputActionValue& Input);
-
-	UFUNCTION()
-	void OnNonogramSet(AN3DNonogram* Nonogram);
 #pragma endregion
 	
 };

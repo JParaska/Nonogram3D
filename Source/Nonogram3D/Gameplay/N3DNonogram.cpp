@@ -6,6 +6,7 @@
 #include "N3DGameInstance.h"
 #include "N3DNonogramColorScheme.h"
 #include "N3DNonogramInput.h"
+#include "Nonogram3DTypes.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "EnhancedInputComponent.h"
@@ -29,6 +30,8 @@ void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 	{
 		if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 		{
+			PlayerEnhancedInputComponent->ClearActionBindings();
+
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionX, ETriggerEvent::Started, this, &ThisClass::SelectionX);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionY, ETriggerEvent::Started, this, &ThisClass::SelectionY);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionZ, ETriggerEvent::Started, this, &ThisClass::SelectionZ);
@@ -51,9 +54,10 @@ void AN3DNonogram::BeginPlay()
 		GameInstance->SetActiveNonogram(this);
 	}
 
-	// TODO get puzzle info
+	// TODO get puzzle info on game start
 
 	/// Temp, setup nonogram based on current puzzle info
+	SetSolution(TestSolution);
 	CurrentSize = FIntVector(10);
 	ResetSelectionCollection(CurrentSize);
 
@@ -152,7 +156,11 @@ void AN3DNonogram::SelectCube()
 					{
 						SelectedCubes.Add(InstanceIndex);
 					}
-					CheckSolution();
+					
+					if (CheckSolution())
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Nonogram completed"));
+					}
 				}
 			}
 		}
@@ -197,7 +205,7 @@ void AN3DNonogram::SelectNext(const ESelectionType Selection, const bool bNext)
 		switch (Selection)
 		{
 		case ESelectionType::X:
-			if (NextIndex <= 0)
+			if (NextIndex < 0)
 			{
 				NextIndex = CurrentSize.X - 1;
 			}
@@ -207,7 +215,7 @@ void AN3DNonogram::SelectNext(const ESelectionType Selection, const bool bNext)
 			}
 			break;
 		case ESelectionType::Y:
-			if (NextIndex <= 0)
+			if (NextIndex < 0)
 			{
 				NextIndex = CurrentSize.Y - 1;
 			}
@@ -217,7 +225,7 @@ void AN3DNonogram::SelectNext(const ESelectionType Selection, const bool bNext)
 			}
 			break;
 		case ESelectionType::Z:
-			if (NextIndex <= 0)
+			if (NextIndex < 0)
 			{
 				NextIndex = CurrentSize.Z - 1;
 			}
@@ -253,6 +261,24 @@ void AN3DNonogram::Select(const ESelectionType Selection, const int Index)
 	CubeInstances->MarkRenderStateDirty();
 
 	CurrentSelection = { Selection, Index };
+}
+
+void AN3DNonogram::SetSolution(UDataTable* SolutionDataTable)
+{
+	if (!ensure(SolutionDataTable))
+	{
+		return;
+	}
+
+	CurrentSolution.Empty();
+	FString ContextString;
+	TArray<FNonogramSolution*> SolutionRows;
+	SolutionDataTable->GetAllRows<FNonogramSolution>(ContextString, SolutionRows);
+	const TMap<FName, uint8*> Solution = SolutionDataTable->GetRowMap();
+	for (const FNonogramSolution* SolutionRow : SolutionRows)
+	{
+		CurrentSolution.Add(SolutionRow->CubeIndex, SolutionRow->FinalColor);
+	}
 }
 
 bool AN3DNonogram::CheckSolution() const
