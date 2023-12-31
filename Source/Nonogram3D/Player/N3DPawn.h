@@ -46,7 +46,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UN3DPlayerInput> PlayerInputConfig;
 
-	UPROPERTY(EditInstanceOnly, Category = "Nonogram")
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Nonogram")
 	TObjectPtr<AN3DNonogram> Nonogram;
 
 #pragma endregion

@@ -2,8 +2,9 @@
 
 #include "N3DGameInstance.h"
 
-void UN3DGameInstance::SetActiveNonogram(AN3DNonogram* ActiveNonogram)
+
+void UN3DGameInstance::SetMode(const EGameMode NewMode)
 {
-	Nonogram = ActiveNonogram;
-	OnNonogramSet.ExecuteIfBound(Nonogram);
+	Mode = NewMode;
+	OnModeChanged.Broadcast(Mode);
 }

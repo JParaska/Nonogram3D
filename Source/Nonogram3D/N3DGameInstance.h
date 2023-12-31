@@ -4,11 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Nonogram3DTypes.h"
 #include "N3DGameInstance.generated.h"
 
-class AN3DNonogram;
-
-DECLARE_DELEGATE_OneParam(FOnNonogramSet, AN3DNonogram*);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModeChanged, const EGameMode, NewMode);
 
 UCLASS()
 class NONOGRAM3D_API UN3DGameInstance : public UGameInstance
@@ -18,18 +17,21 @@ class NONOGRAM3D_API UN3DGameInstance : public UGameInstance
 #pragma region Properties
 public:
 
-	FOnNonogramSet OnNonogramSet;
+	UPROPERTY(BlueprintAssignable)
+	FOnModeChanged OnModeChanged;
 
 protected:
 
-	TObjectPtr<AN3DNonogram> Nonogram;
+	EGameMode Mode = EGameMode::MainMenu;
 #pragma endregion
 
 #pragma region Methods
 public:
 
-	AN3DNonogram* GetActiveNonogram() const { return Nonogram; }
+	UFUNCTION(BlueprintPure)
+	EGameMode GetMode() const { return Mode; }
 
-	void SetActiveNonogram(AN3DNonogram* ActiveNonogram);
+	UFUNCTION(BlueprintCallable)
+	void SetMode(const EGameMode NewMode);
 #pragma endregion
 };

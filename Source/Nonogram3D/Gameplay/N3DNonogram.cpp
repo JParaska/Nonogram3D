@@ -12,6 +12,7 @@
 #include "EnhancedInputComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+
 AN3DNonogram::AN3DNonogram()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -40,25 +41,8 @@ void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 	}
 }
 
-void AN3DNonogram::BeginPlay()
+void AN3DNonogram::SpawnCubeInstances()
 {
-	Super::BeginPlay();
-
-	if (!ensure(CubeInstances))
-	{
-		return;
-	}
-
-	if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
-	{
-		GameInstance->SetActiveNonogram(this);
-	}
-
-	// TODO get puzzle info on game start
-
-	/// Temp, setup nonogram based on current puzzle info
-	SetSolution(TestSolution);
-	CurrentSize = FIntVector(10);
 	ResetSelectionCollection(CurrentSize);
 
 	CubeInstances->ClearInstances();
@@ -73,7 +57,7 @@ void AN3DNonogram::BeginPlay()
 			{
 				FTransform InstanceTransform(FRotator::ZeroRotator, FVector(x * 100.0f, y * 100.0f, z * 100.0f), CubeScale);
 				int32 CubeIndex = CubeInstances->AddInstance(InstanceTransform, true);
-				
+
 				Cubes.Add(FIntVector(x, y, z), CubeIndex);
 				AddInstanceToCollection(FIntVector(x, y, z), CubeIndex);
 
@@ -83,9 +67,47 @@ void AN3DNonogram::BeginPlay()
 	}
 
 	CubeInstances->MarkRenderStateDirty();
+}
 
+void AN3DNonogram::SetSelectedColor(const FColor& NewColor)
+{
+	SelectedColor = Mode == EGameMode::Editor ? NewColor : FColor::White;
+}
+
+void AN3DNonogram::Resize(const FIntVector& Size)
+{
+	if (!ensure(Mode == EGameMode::Editor))
+	{
+		return;
+	}
+
+	CurrentSize = Size;
+	SpawnCubeInstances();
+	DeselectAllCubes();
+}
+
+void AN3DNonogram::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!ensure(CubeInstances))
+	{
+		return;
+	}
+
+	if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GameInstance->OnModeChanged.AddDynamic(this, &ThisClass::OnGameModeChanged);
+	}
+
+	// TODO get puzzle info on game start
+
+	/// Temp, setup nonogram based on current puzzle info, move to OnGameModeChanged
+	SetSolution(TestSolution);
+	CurrentSize = FIntVector(10);
+	SpawnCubeInstances();
 	CurrentSelection = { ESelectionType::X, 0 };
-	Select(CurrentSelection.Key, CurrentSelection.Value);
+	SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
 }
 
 void AN3DNonogram::SelectionX(const FInputActionValue& Input)
@@ -144,26 +166,30 @@ void AN3DNonogram::SelectCube()
 
 				if (Cubes.Contains(InstanceCoords))
 				{
-					const int32 InstanceIndex = Cubes[InstanceCoords];
-					CubeInstances->SetCustomData(InstanceIndex, ColorScheme->FilledActive.Get());
-					CubeInstances->MarkRenderStateDirty();
-
-					if (SelectedCubes.Contains(InstanceIndex))
-					{
-						SelectedCubes.Remove(InstanceIndex);
-					}
-					else
-					{
-						SelectedCubes.Add(InstanceIndex);
-					}
-					
-					if (CheckSolution())
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Nonogram completed"));
-					}
+					SelectCube(Cubes[InstanceCoords]);
 				}
 			}
 		}
+	}
+}
+
+void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
+{
+	Mode = NewMode;
+
+	switch (Mode)
+	{
+	case EGameMode::MainMenu:
+		break;
+	case EGameMode::Solving:
+		break;
+	case EGameMode::Editor:
+		CurrentSolution.Empty();
+		SelectedCubes.Empty();
+		Resize(FIntVector(10));
+		break;
+	default:
+		break;
 	}
 }
 
@@ -197,7 +223,7 @@ void AN3DNonogram::SelectNext(const ESelectionType Selection, const bool bNext)
 {
 	if (CurrentSelection.Key != Selection)
 	{
-		Select(Selection, 0); // TODO remember selection on different axis?
+		SelectPlane(Selection, 0); // TODO remember selection on different axis?
 	}
 	else
 	{
@@ -236,26 +262,40 @@ void AN3DNonogram::SelectNext(const ESelectionType Selection, const bool bNext)
 			break;
 		}
 
-		Select(CurrentSelection.Key, NextIndex);
+		SelectPlane(CurrentSelection.Key, NextIndex);
 	}
 }
 
-void AN3DNonogram::Select(const ESelectionType Selection, const int Index)
+void AN3DNonogram::SelectPlane(const ESelectionType Selection, const int Index)
 {
 	// Deselect previouus
 	const TArray<float> EmptyInactive = ColorScheme->EmptyInactive.Get();
-	const TArray<float> FilledInactive = ColorScheme->FilledInactive.Get();
-	for (int32 InstanceIndex : SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane)
+	TArray<float> FilledInactive = ColorScheme->FilledInactive.Get();
+	for (const int32 InstanceIndex : SelectionCollection[CurrentSelection.Key].Collection[CurrentSelection.Value].Plane)
 	{
-		CubeInstances->SetCustomData(InstanceIndex, SelectedCubes.Contains(InstanceIndex) ? FilledInactive : EmptyInactive);
+		if (Mode == EGameMode::Editor && CurrentSolution.Contains(InstanceIndex))
+		{
+			FilledInactive[0] = SelectedColor.R;
+			FilledInactive[1] = SelectedColor.G;
+			FilledInactive[2] = SelectedColor.B;
+		}
+		const bool bSelected = (Mode == EGameMode::Editor && CurrentSolution.Contains(InstanceIndex)) || (Mode == EGameMode::Solving && SelectedCubes.Contains(InstanceIndex));
+		CubeInstances->SetCustomData(InstanceIndex, bSelected ? FilledInactive : EmptyInactive);
 	}
 
 	// Select new
 	const TArray<float> EmptyActive = ColorScheme->EmptyActive.Get();
-	const TArray<float> FilledActive = ColorScheme->FilledActive.Get();
-	for (int32 InstanceIndex : SelectionCollection[Selection].Collection[Index].Plane)
+	TArray<float> FilledActive = ColorScheme->FilledActive.Get();
+	for (const int32 InstanceIndex : SelectionCollection[Selection].Collection[Index].Plane)
 	{
-		CubeInstances->SetCustomData(InstanceIndex, SelectedCubes.Contains(InstanceIndex) ? FilledActive : EmptyActive);
+		if (Mode == EGameMode::Editor && CurrentSolution.Contains(InstanceIndex))
+		{
+			FilledActive[0] = SelectedColor.R;
+			FilledActive[1] = SelectedColor.G;
+			FilledActive[2] = SelectedColor.B;
+		}
+		const bool bSelected = (Mode == EGameMode::Editor && CurrentSolution.Contains(InstanceIndex)) || (Mode == EGameMode::Solving && SelectedCubes.Contains(InstanceIndex));
+		CubeInstances->SetCustomData(InstanceIndex, bSelected ? FilledActive : EmptyActive);
 	}
 
 	CubeInstances->MarkRenderStateDirty();
@@ -297,4 +337,58 @@ bool AN3DNonogram::CheckSolution() const
 	}
 
 	return true;
+}
+
+void AN3DNonogram::DeselectAllCubes()
+{
+	const TArray<float> EmptyInactive = ColorScheme->EmptyInactive.Get();
+	for (const TPair<FIntVector, int>& Cube : Cubes)
+	{
+		CubeInstances->SetCustomData(Cube.Value, EmptyInactive);
+	}
+	SelectPlane(ESelectionType::X, 0);
+}
+
+void AN3DNonogram::SelectCube(const int32 CubeIndex)
+{
+	switch (Mode)
+	{
+	case EGameMode::Solving:
+		if (SelectedCubes.Contains(CubeIndex))
+		{
+			CubeInstances->SetCustomData(CubeIndex, ColorScheme->EmptyActive.Get());
+			SelectedCubes.Remove(CubeIndex);
+		}
+		else
+		{
+			CubeInstances->SetCustomData(CubeIndex, ColorScheme->FilledActive.Get());
+			SelectedCubes.Add(CubeIndex);
+		}
+		CubeInstances->MarkRenderStateDirty();
+
+		if (CheckSolution())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Nonogram completed"));
+		}
+		break;
+	case EGameMode::Editor:
+		if (SelectedCubes.Contains(CubeIndex))
+		{
+			CubeInstances->SetCustomData(CubeIndex, ColorScheme->EmptyActive.Get());
+			CurrentSolution.Remove(CubeIndex);
+		}
+		else
+		{
+			TArray<float> ColorData = ColorScheme->FilledActive.Get();
+			ColorData[0] = SelectedColor.R;
+			ColorData[1] = SelectedColor.G;
+			ColorData[2] = SelectedColor.B;
+			CubeInstances->SetCustomData(CubeIndex, ColorData);
+			CurrentSolution.Add(CubeIndex, SelectedColor);
+		}
+		CubeInstances->MarkRenderStateDirty();
+		break;
+	default:
+		break;
+	}
 }

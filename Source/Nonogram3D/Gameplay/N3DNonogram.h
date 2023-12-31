@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Nonogram3DTypes.h"
 #include "N3DNonogram.generated.h"
 
 class UN3DNonogramColorScheme;
@@ -63,7 +64,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UN3DNonogramInput> NonogramInput;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FIntVector CurrentSize;
 
 	UPROPERTY(VisibleAnywhere)
@@ -79,13 +80,40 @@ protected:
 	TMap<int32, FColor> CurrentSolution;
 	TSet<int32> SelectedCubes;
 
+#pragma region NonogramEditor
+
+	FColor SelectedColor = FColor::White;
+#pragma endregion
+
+private:
+
+	EGameMode Mode = EGameMode::MainMenu;
+
 #pragma endregion
 	
+#pragma region Methods
 public:	
 	
 	AN3DNonogram();
 
 	virtual void EnableInput(APlayerController* PlayerController) override;
+
+	void SpawnCubeInstances();
+
+	UFUNCTION(BlueprintPure, Category = "Nonogram")
+	TMap<int32, FColor> GetCurrentSolution() const { return CurrentSolution; }
+
+#pragma region NonogramEditor
+
+	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Editor")
+	FColor GetSelectedColor() const { return SelectedColor; }
+
+	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
+	void SetSelectedColor(const FColor& NewColor);
+
+	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
+	void Resize(const FIntVector& Size);
+#pragma endregion
 
 protected:
 	
@@ -103,6 +131,9 @@ protected:
 	UFUNCTION()
 	void SelectCube();
 
+	UFUNCTION()
+	void OnGameModeChanged(const EGameMode NewMode);
+
 private:
 
 	void ResetSelectionCollection(const FIntVector& Size);
@@ -113,10 +144,15 @@ private:
 
 	void SelectNext(const ESelectionType Selection, const bool bNext);
 
-	void Select(const ESelectionType Selection, const int Index);
+	void SelectPlane(const ESelectionType Selection, const int Index);
 
 	void SetSolution(UDataTable* SolutionDataTable);
 
 	/** Returns true if all (and only) cubes in solution are selected */
 	bool CheckSolution() const;
+
+	void DeselectAllCubes();
+
+	void SelectCube(const int32 CubeIndex);
+#pragma endregion
 };
