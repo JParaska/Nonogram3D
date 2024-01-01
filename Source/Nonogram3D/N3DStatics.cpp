@@ -37,6 +37,8 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 		StringSolution.Add(Line);
 	}
 
+	// TODO save also size
+
 	FString Path;
 	const FString NonogramFileName = NonogramName + FString(".csv");
 

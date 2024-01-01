@@ -57,7 +57,7 @@ public:
 	FIntVector Size = FIntVector(0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSoftObjectPtr<UDataTable> Nonogram = nullptr;
+	TSoftObjectPtr<UDataTable> Nonogram;
 
 	bool IsValid() const {
 		return !NonogramName.IsEmpty() && !Size.IsZero(); // TODO test also if Nonogram is valid (either loaded or pointing to valid object)

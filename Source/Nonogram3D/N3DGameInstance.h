@@ -7,6 +7,8 @@
 #include "Nonogram3DTypes.h"
 #include "N3DGameInstance.generated.h"
 
+class UDataTable;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModeChanged, const EGameMode, NewMode);
 
 UCLASS()
@@ -23,6 +25,9 @@ public:
 protected:
 
 	EGameMode Mode = EGameMode::MainMenu;
+
+	UPROPERTY()
+	FNonogram SelectedSolution = FNonogram();
 #pragma endregion
 
 #pragma region Methods
@@ -31,7 +36,12 @@ public:
 	UFUNCTION(BlueprintPure)
 	EGameMode GetMode() const { return Mode; }
 
+	FNonogram GetSelectedSolution() const { return SelectedSolution; }
+
 	UFUNCTION(BlueprintCallable)
 	void SetMode(const EGameMode NewMode);
+
+	UFUNCTION(BlueprintCallable)
+	void StartSolving(const FNonogram& Solution);
 #pragma endregion
 };

@@ -103,10 +103,9 @@ void AN3DNonogram::BeginPlay()
 	// TODO get puzzle info on game start
 
 	/// Temp, setup nonogram based on current puzzle info, move to OnGameModeChanged
-	SetSolution(TestSolution);
 	CurrentSize = FIntVector(10);
 	SpawnCubeInstances();
-	CurrentSelection = { ESelectionType::X, 0 };
+	CurrentSelection = { ESelectionType::X, 9 };
 	SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
 }
 
@@ -182,6 +181,18 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 	case EGameMode::MainMenu:
 		break;
 	case EGameMode::Solving:
+		CurrentSolution.Empty();
+		SelectedCubes.Empty();
+		if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			FNonogram Nonogram = GameInstance->GetSelectedSolution();
+			SetSolution(Nonogram.Nonogram.LoadSynchronous());
+			CurrentSize = Nonogram.Size;
+			SpawnCubeInstances();
+			CurrentSelection = { ESelectionType::X, 0 };
+			SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
+			// TODO start timer, wen player selects cube for the first time
+		}
 		break;
 	case EGameMode::Editor:
 		CurrentSolution.Empty();
@@ -372,7 +383,7 @@ void AN3DNonogram::SelectCube(const int32 CubeIndex)
 		}
 		break;
 	case EGameMode::Editor:
-		if (SelectedCubes.Contains(CubeIndex))
+		if (CurrentSolution.Contains(CubeIndex))
 		{
 			CubeInstances->SetCustomData(CubeIndex, ColorScheme->EmptyActive.Get());
 			CurrentSolution.Remove(CubeIndex);

@@ -7,6 +7,7 @@
 #include "N3DPlayerController.generated.h"
 
 class AN3DNonogram;
+class UN3DNonogramList;
 class UN3DPlayerInput;
 
 class UInputMappingContext;
@@ -24,6 +25,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> PlayerInputMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
+	TObjectPtr<UN3DNonogramList> Nonograms;
 #pragma endregion
 
 #pragma region Methods
