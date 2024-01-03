@@ -3,8 +3,10 @@
 #include "N3DGameInstance.h"
 
 #include "N3DNonogram.h"
+#include "N3DNonogramColorScheme.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "Components/InstancedStaticMeshComponent.h"
 
 
 void UN3DGameInstance::SetMode(const EGameMode NewMode)
@@ -40,7 +42,14 @@ void UN3DGameInstance::Solve()
 				{
 					Nonogram->SelectCube(Cube.Key);
 				}
-				Nonogram->DeselectAllCubes();
+
+				const TArray<float> EmptyInactive = Nonogram->ColorScheme->EmptyInactive.Get();
+				const TArray<float> FilledInactive = Nonogram->ColorScheme->FilledInactive.Get();
+				for (TPair<FIntVector, int32> Cube : Nonogram->Cubes)
+				{
+					const bool bSelected = Nonogram->SelectedCubes.Contains(Cube.Value);
+					Nonogram->CubeInstances->SetCustomData(Cube.Value, bSelected ? FilledInactive : EmptyInactive);
+				}
 				Nonogram->SelectPlane(ESelectionType::X, 0);
 			}
 		}

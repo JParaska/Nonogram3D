@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartSolving(const FNonogram& Solution);
 
+	/**
+	* Solves current nonogram. Applies only in solving mode
+	*/
 	UFUNCTION(Exec)
 	void Solve();
 #pragma endregion

@@ -41,7 +41,12 @@ void AN3DNonogram::EnableInput(APlayerController* PlayerController)
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionX, ETriggerEvent::Started, this, &ThisClass::SelectionX);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionY, ETriggerEvent::Started, this, &ThisClass::SelectionY);
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectionZ, ETriggerEvent::Started, this, &ThisClass::SelectionZ);
+
 			PlayerEnhancedInputComponent->BindAction(NonogramInput->SelectCube, ETriggerEvent::Started, this, &ThisClass::SelectCube);
+
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->HighlightAllSelectedCubes, ETriggerEvent::Started, this, &ThisClass::HighlightAllSelectedCubes);
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->HighlightAllSelectedCubes, ETriggerEvent::Completed, this, &ThisClass::EndHighlight);
+			PlayerEnhancedInputComponent->BindAction(NonogramInput->HighlightAllSelectedCubes, ETriggerEvent::Canceled, this, &ThisClass::EndHighlight);
 		}
 	}
 }
@@ -105,7 +110,7 @@ void AN3DNonogram::Resize(const FIntVector& Size)
 
 	CurrentSize = Size;
 	SpawnCubeInstances();
-	DeselectAllCubes();
+	DefaultMaterialOnAllCubes();
 }
 
 void AN3DNonogram::BeginPlay()
@@ -192,6 +197,56 @@ void AN3DNonogram::SelectCube()
 			}
 		}
 	}
+}
+
+void AN3DNonogram::HighlightAllSelectedCubes()
+{
+	if (Mode != EGameMode::Editor && Mode != EGameMode::Solving)
+	{
+		return;
+	}
+
+	const TArray<float> Deactivated = ColorScheme->Deactivated.Get();
+	TArray<float> Selected = ColorScheme->FilledActive.Get();
+	for (const TPair<FIntVector, int32>& Cube : Cubes)
+	{
+		const bool bSelected = (Mode == EGameMode::Editor && CurrentSolution.Contains(Cube.Value)) || (Mode == EGameMode::Solving && SelectedCubes.Contains(Cube.Value));
+		if (!bSelected)
+		{
+			CubeInstances->SetCustomData(Cube.Value, Deactivated);
+		}
+		else
+		{
+			if (Mode == EGameMode::Editor)
+			{
+				Selected[0] = CurrentSolution[Cube.Value].R;
+				Selected[1] = CurrentSolution[Cube.Value].G;
+				Selected[2] = CurrentSolution[Cube.Value].B;
+			}
+			CubeInstances->SetCustomData(Cube.Value, Selected);
+		}
+	}
+	CubeInstances->MarkRenderStateDirty();
+}
+
+void AN3DNonogram::EndHighlight()
+{
+	if (Mode != EGameMode::Editor && Mode != EGameMode::Solving)
+	{
+		return;
+	}
+
+	DefaultMaterialOnAllCubes();
+	const TPair<ESelectionType, int> LastSelection = CurrentSelection;
+
+	const TArray<float> EmptyInactive = ColorScheme->EmptyInactive.Get();
+	const TArray<float> FilledInactive = ColorScheme->FilledInactive.Get();
+	for (TPair<FIntVector, int32> Cube : Cubes)
+	{
+		const bool bSelected = (Mode == EGameMode::Editor && CurrentSolution.Contains(Cube.Value)) || (Mode == EGameMode::Solving && SelectedCubes.Contains(Cube.Value));
+		CubeInstances->SetCustomData(Cube.Value, bSelected ? FilledInactive : EmptyInactive);
+	}
+	SelectPlane(LastSelection.Key, LastSelection.Value);
 }
 
 void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
@@ -374,7 +429,7 @@ bool AN3DNonogram::CheckSolution() const
 	return true;
 }
 
-void AN3DNonogram::DeselectAllCubes()
+void AN3DNonogram::DefaultMaterialOnAllCubes()
 {
 	const TArray<float> EmptyInactive = ColorScheme->EmptyInactive.Get();
 	for (const TPair<FIntVector, int>& Cube : Cubes)

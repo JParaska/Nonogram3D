@@ -144,6 +144,12 @@ protected:
 	void SelectCube();
 
 	UFUNCTION()
+	void HighlightAllSelectedCubes();
+
+	UFUNCTION()
+	void EndHighlight();
+
+	UFUNCTION()
 	void OnGameModeChanged(const EGameMode NewMode);
 
 	void ResetSelectionCollection(const FIntVector& Size);
@@ -161,7 +167,7 @@ protected:
 	/** Returns true if all (and only) cubes in solution are selected */
 	bool CheckSolution() const;
 
-	void DeselectAllCubes();
+	void DefaultMaterialOnAllCubes();
 
 	void SelectCube(const int32 CubeIndex);
 
