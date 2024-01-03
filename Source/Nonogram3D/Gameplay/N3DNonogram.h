@@ -13,14 +13,9 @@ class UN3DNonogramInput;
 class APlayerController;
 class UDataTable;
 class UInstancedStaticMeshComponent;
+class UWidgetComponent;
 
-UENUM(BlueprintType)
-enum class ESelectionType : uint8
-{
-	X,
-	Y,
-	Z
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChanged, const ESelectionType, Type, const int32, Index);
 
 USTRUCT(BlueprintType)
 struct FSelectionPlane
@@ -46,11 +41,18 @@ class NONOGRAM3D_API AN3DNonogram : public AActor
 	GENERATED_BODY()
 
 #pragma region Properties
+public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSelectionChanged OnSelectionChanged;
 
 protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Scene")
 	TObjectPtr<UInstancedStaticMeshComponent> CubeInstances;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Scene")
+	TObjectPtr<UWidgetComponent> NonogramKeyWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup")
 	FVector CubeScale = FVector(0.99f);
@@ -80,6 +82,8 @@ protected:
 	TMap<int32, FColor> CurrentSolution;
 	TSet<int32> SelectedCubes;
 
+	TMap<FNonogramKey, TArray<int32>> NonogramKey;
+
 #pragma region NonogramEditor
 
 	FColor SelectedColor = FColor::White;
@@ -101,7 +105,13 @@ public:
 	void SpawnCubeInstances();
 
 	UFUNCTION(BlueprintPure, Category = "Nonogram")
+	void GetCurrentSelection(ESelectionType& Type, int& Index) const;
+
+	UFUNCTION(BlueprintPure, Category = "Nonogram")
 	TMap<int32, FColor> GetCurrentSolution() const { return CurrentSolution; }
+
+	UFUNCTION(BlueprintPure, Category = "Nonogram")
+	bool GetNonogramKey(const FNonogramKey& Key, TArray<int32>& Output) const;
 
 #pragma region NonogramEditor
 
@@ -116,6 +126,8 @@ public:
 #pragma endregion
 
 protected:
+
+	friend class UN3DGameInstance;
 	
 	virtual void BeginPlay() override;
 
@@ -133,8 +145,6 @@ protected:
 
 	UFUNCTION()
 	void OnGameModeChanged(const EGameMode NewMode);
-
-private:
 
 	void ResetSelectionCollection(const FIntVector& Size);
 
@@ -154,5 +164,9 @@ private:
 	void DeselectAllCubes();
 
 	void SelectCube(const int32 CubeIndex);
+
+	void GenerateNonogramKey();
+
+	void GenerateNonogramKeyForPlane(const ESelectionType Plane);
 #pragma endregion
 };

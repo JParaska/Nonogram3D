@@ -9,6 +9,7 @@
 #include "Nonogram3DTypes.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,6 +20,10 @@ AN3DNonogram::AN3DNonogram()
 
 	CubeInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Cubes"));
 	RootComponent = CubeInstances;
+
+	NonogramKeyWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("NonogramKey"));
+	NonogramKeyWidget->SetupAttachment(RootComponent);
+
 }
 
 void AN3DNonogram::EnableInput(APlayerController* PlayerController)
@@ -67,6 +72,23 @@ void AN3DNonogram::SpawnCubeInstances()
 	}
 
 	CubeInstances->MarkRenderStateDirty();
+}
+
+void AN3DNonogram::GetCurrentSelection(ESelectionType& Type, int& Index) const
+{
+	Type = CurrentSelection.Key;
+	Index = CurrentSelection.Value;
+}
+
+bool AN3DNonogram::GetNonogramKey(const FNonogramKey& Key, TArray<int32>& Output) const
+{
+	if (!NonogramKey.Contains(Key))
+	{
+		return false;
+	}
+
+	Output = NonogramKey[Key];
+	return true;
 }
 
 void AN3DNonogram::SetSelectedColor(const FColor& NewColor)
@@ -187,6 +209,7 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 		{
 			FNonogram Nonogram = GameInstance->GetSelectedSolution();
 			SetSolution(Nonogram.Nonogram.LoadSynchronous());
+			GenerateNonogramKey();
 			CurrentSize = Nonogram.Size;
 			SpawnCubeInstances();
 			CurrentSelection = { ESelectionType::X, 0 };
@@ -312,6 +335,7 @@ void AN3DNonogram::SelectPlane(const ESelectionType Selection, const int Index)
 	CubeInstances->MarkRenderStateDirty();
 
 	CurrentSelection = { Selection, Index };
+	OnSelectionChanged.Broadcast(Selection, Index);
 }
 
 void AN3DNonogram::SetSolution(UDataTable* SolutionDataTable)
@@ -401,5 +425,96 @@ void AN3DNonogram::SelectCube(const int32 CubeIndex)
 		break;
 	default:
 		break;
+	}
+}
+
+void AN3DNonogram::GenerateNonogramKey()
+{
+	if (CurrentSolution.IsEmpty())
+	{
+		return;
+	}
+
+	NonogramKey.Empty();
+
+	GenerateNonogramKeyForPlane(ESelectionType::X);
+	GenerateNonogramKeyForPlane(ESelectionType::Y);
+	GenerateNonogramKeyForPlane(ESelectionType::Z);
+}
+
+void AN3DNonogram::GenerateNonogramKeyForPlane(const ESelectionType Plane)
+{
+	int Axis1;
+	int Axis2;
+	int Axis3;
+
+	switch (Plane)
+	{
+	case ESelectionType::X:
+		Axis1 = CurrentSize.Y;
+		Axis2 = CurrentSize.Z;
+		Axis3 = CurrentSize.X;
+		break;
+	case ESelectionType::Y:
+		Axis1 = CurrentSize.X;
+		Axis2 = CurrentSize.Z;
+		Axis3 = CurrentSize.Y;
+		break;
+	case ESelectionType::Z:
+		Axis1 = CurrentSize.X;
+		Axis2 = CurrentSize.Y;
+		Axis3 = CurrentSize.Z;
+		break;
+	default:
+		return;
+	}
+
+	for (int i = 0; i < Axis1; i++)
+	{
+		for (int j = 0; j < Axis2; j++)
+		{
+			FNonogramKey Index(Plane, FIntPoint(i, j));
+			if (!NonogramKey.Contains(Index))
+			{
+				TArray<int> Keys;
+				int Counter = 0;
+				for (int k = 0; k < Axis3; k++)
+				{
+					FIntVector CubeIndex;
+					switch (Plane)
+					{
+					case ESelectionType::X:
+						CubeIndex = FIntVector(k, i, j);
+						break;
+					case ESelectionType::Y:
+						CubeIndex = FIntVector(i, k, j);
+						break;
+					case ESelectionType::Z:
+						CubeIndex = FIntVector(i, j, k);
+						break;
+					default:
+						return;
+					}
+
+					if (CurrentSolution.Contains(Cubes[CubeIndex]))
+					{
+						Counter++;
+					}
+					else
+					{
+						if (Counter > 0)
+						{
+							Keys.Add(Counter);
+							Counter = 0;
+						}
+					}
+				}
+				if (Counter > 0)
+				{
+					Keys.Add(Counter);
+				}
+				NonogramKey.Add(Index, Keys);
+			}
+		}
 	}
 }

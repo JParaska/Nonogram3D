@@ -43,5 +43,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartSolving(const FNonogram& Solution);
+
+	UFUNCTION(Exec)
+	void Solve();
 #pragma endregion
 };
