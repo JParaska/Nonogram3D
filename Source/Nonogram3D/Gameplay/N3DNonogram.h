@@ -16,6 +16,9 @@ class UInstancedStaticMeshComponent;
 class UWidgetComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChanged, const ESelectionType, Type, const int32, Index);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNonogramSolvingStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNonogramSolvingEnded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCubeSelected, const int32, CubeIndex);
 
 USTRUCT(BlueprintType)
 struct FSelectionPlane
@@ -45,6 +48,15 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnSelectionChanged OnSelectionChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnNonogramSolvingStarted OnNonogramSolvingStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnNonogramSolvingEnded OnNonogramSolvingEnded;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnCubeSelected OnCubeSelected;
 
 protected:
 
@@ -89,6 +101,12 @@ protected:
 	FColor SelectedColor = FColor::White;
 #pragma endregion
 
+#pragma region NonogramSoving
+
+	TOptional<float> SolvingStartTime;
+	TOptional<float> SolvingEndTime;
+#pragma endregion
+
 private:
 
 	EGameMode Mode = EGameMode::MainMenu;
@@ -123,6 +141,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
 	void Resize(const FIntVector& Size);
+#pragma endregion
+
+#pragma region NonogramSolving
+
+	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Solving")
+	bool GetNonogramSolvingElapsedTime(float& solvingElapsedTime);
 #pragma endregion
 
 protected:
@@ -174,5 +198,7 @@ protected:
 	void GenerateNonogramKey();
 
 	void GenerateNonogramKeyForPlane(const ESelectionType Plane);
+
+	void FinishSolving();
 #pragma endregion
 };

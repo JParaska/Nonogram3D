@@ -113,6 +113,22 @@ void AN3DNonogram::Resize(const FIntVector& Size)
 	DefaultMaterialOnAllCubes();
 }
 
+bool AN3DNonogram::GetNonogramSolvingElapsedTime(float& SolvingElapsedTime) {
+	SolvingElapsedTime = 0.0f;
+	if (Mode != EGameMode::Solving)
+	{
+		return false;
+	}
+
+	if (!SolvingStartTime.IsSet())
+	{
+		return false;
+	}
+
+	SolvingElapsedTime = SolvingEndTime.Get(UGameplayStatics::GetTimeSeconds(this)) - SolvingStartTime.GetValue();
+	return true;
+}
+
 void AN3DNonogram::BeginPlay()
 {
 	Super::BeginPlay();
@@ -163,7 +179,7 @@ void AN3DNonogram::SelectCube()
 			FTransform PlaneBase;
 			
 			// This value will lead to errors, when selecting a cube from sharp angle
-			// TODO offset the PlaneBase +-50.0f and check against two planes, then check which one is closer to mouse world position
+			// TODO offset the PlaneBase +-48.0f and check against two planes, then check which one is closer to mouse world position
 			if (CubeInstances->GetInstanceTransform(FirstInstanceInSelectedPlane, PlaneBase, true))
 			{
 				FVector PlaneForward;
@@ -192,7 +208,14 @@ void AN3DNonogram::SelectCube()
 
 				if (Cubes.Contains(InstanceCoords))
 				{
+					// Start timer in solving mode first time player selects a cube
+					if (Mode == EGameMode::Solving && !SolvingStartTime.IsSet())
+					{
+						SolvingStartTime = UGameplayStatics::GetTimeSeconds(this);
+						OnNonogramSolvingStarted.Broadcast();
+					}
 					SelectCube(Cubes[InstanceCoords]);
+					OnCubeSelected.Broadcast(Cubes[InstanceCoords]);
 				}
 			}
 		}
@@ -264,12 +287,22 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 		{
 			FNonogram Nonogram = GameInstance->GetSelectedSolution();
 			SetSolution(Nonogram.Nonogram.LoadSynchronous());
-			GenerateNonogramKey();
+			
 			CurrentSize = Nonogram.Size;
+			GenerateNonogramKey();
+			
 			SpawnCubeInstances();
+			
 			CurrentSelection = { ESelectionType::X, 0 };
 			SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
-			// TODO start timer, wen player selects cube for the first time
+			
+			SolvingStartTime.Reset();
+			SolvingEndTime.Reset();
+
+			if (Controller)
+			{
+				EnableInput(Controller);
+			}
 		}
 		break;
 	case EGameMode::Editor:
@@ -458,7 +491,7 @@ void AN3DNonogram::SelectCube(const int32 CubeIndex)
 
 		if (CheckSolution())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Nonogram completed"));
+			FinishSolving();
 		}
 		break;
 	case EGameMode::Editor:
@@ -572,4 +605,11 @@ void AN3DNonogram::GenerateNonogramKeyForPlane(const ESelectionType Plane)
 			}
 		}
 	}
+}
+
+void AN3DNonogram::FinishSolving() {
+	UE_LOG(LogTemp, Warning, TEXT("Nonogram completed"));
+	DisableInput(Controller);
+	SolvingEndTime = UGameplayStatics::GetTimeSeconds(this);
+	OnNonogramSolvingEnded.Broadcast();
 }
