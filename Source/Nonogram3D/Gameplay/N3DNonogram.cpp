@@ -129,6 +129,24 @@ bool AN3DNonogram::GetNonogramSolvingElapsedTime(float& SolvingElapsedTime) {
 	return true;
 }
 
+bool AN3DNonogram::CheckSolution() const
+{
+	if (SelectedCubes.Num() != CurrentSolution.Num())
+	{
+		return false;
+	}
+
+	for (const int32 InstanceIndex : SelectedCubes)
+	{
+		if (!CurrentSolution.Contains(InstanceIndex))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void AN3DNonogram::BeginPlay()
 {
 	Super::BeginPlay();
@@ -442,24 +460,6 @@ void AN3DNonogram::SetSolution(UDataTable* SolutionDataTable)
 	{
 		CurrentSolution.Add(SolutionRow->CubeIndex, SolutionRow->FinalColor);
 	}
-}
-
-bool AN3DNonogram::CheckSolution() const
-{
-	if (SelectedCubes.Num() != CurrentSolution.Num())
-	{
-		return false;
-	}
-
-	for (const int32 InstanceIndex : SelectedCubes)
-	{
-		if (!CurrentSolution.Contains(InstanceIndex))
-		{
-			return false;
-		}
-	}
-
-	return true;
 }
 
 void AN3DNonogram::DefaultMaterialOnAllCubes()

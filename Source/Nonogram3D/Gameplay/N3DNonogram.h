@@ -72,13 +72,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup")
 	TObjectPtr<UN3DNonogramColorScheme> ColorScheme;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Setup")
-	TObjectPtr<UDataTable> TestSolution; // TODO remove
-
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UN3DNonogramInput> NonogramInput;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Nonogram")
 	FIntVector CurrentSize;
 
 	UPROPERTY(VisibleAnywhere)
@@ -92,6 +89,8 @@ protected:
 	TObjectPtr<APlayerController> Controller;
 
 	TMap<int32, FColor> CurrentSolution;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Nonogram")
 	TSet<int32> SelectedCubes;
 
 	TMap<FNonogramKey, TArray<int32>> NonogramKey;
@@ -147,6 +146,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Solving")
 	bool GetNonogramSolvingElapsedTime(float& solvingElapsedTime);
+
+	/** Returns true if all (and only) cubes in solution are selected */
+	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Solving")
+	bool CheckSolution() const;
 #pragma endregion
 
 protected:
@@ -187,9 +190,6 @@ protected:
 	void SelectPlane(const ESelectionType Selection, const int Index);
 
 	void SetSolution(UDataTable* SolutionDataTable);
-
-	/** Returns true if all (and only) cubes in solution are selected */
-	bool CheckSolution() const;
 
 	void DefaultMaterialOnAllCubes();
 
