@@ -258,13 +258,18 @@ void AN3DNonogram::HighlightAllSelectedCubes()
 		}
 		else
 		{
-			if (Mode == EGameMode::Editor)
+			if (Mode == EGameMode::Editor || (Mode == EGameMode::Solving && SolvingEndTime.IsSet()))
 			{
 				Selected[0] = CurrentSolution[Cube.Value].R;
 				Selected[1] = CurrentSolution[Cube.Value].G;
 				Selected[2] = CurrentSolution[Cube.Value].B;
 			}
 			CubeInstances->SetCustomData(Cube.Value, Selected);
+
+			FTransform InstanceTransform;
+			CubeInstances->GetInstanceTransform(Cube.Value, InstanceTransform);
+			InstanceTransform.SetScale3D(FVector(1));
+			CubeInstances->UpdateInstanceTransform(Cube.Value, InstanceTransform);
 		}
 	}
 	CubeInstances->MarkRenderStateDirty();
@@ -286,6 +291,11 @@ void AN3DNonogram::EndHighlight()
 	{
 		const bool bSelected = (Mode == EGameMode::Editor && CurrentSolution.Contains(Cube.Value)) || (Mode == EGameMode::Solving && SelectedCubes.Contains(Cube.Value));
 		CubeInstances->SetCustomData(Cube.Value, bSelected ? FilledInactive : EmptyInactive);
+
+		FTransform InstanceTransform;
+		CubeInstances->GetInstanceTransform(Cube.Value, InstanceTransform);
+		InstanceTransform.SetScale3D(CubeScale);
+		CubeInstances->UpdateInstanceTransform(Cube.Value, InstanceTransform);
 	}
 	SelectPlane(LastSelection.Key, LastSelection.Value);
 }
@@ -311,6 +321,10 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 			
 			SpawnCubeInstances();
 			
+			if (NonogramKeyWidget)
+			{
+				NonogramKeyWidget->SetVisibility(true);
+			}
 			CurrentSelection = { ESelectionType::X, 0 };
 			SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
 			
@@ -612,4 +626,10 @@ void AN3DNonogram::FinishSolving() {
 	DisableInput(Controller);
 	SolvingEndTime = UGameplayStatics::GetTimeSeconds(this);
 	OnNonogramSolvingEnded.Broadcast();
+	
+	if (NonogramKeyWidget)
+	{
+		NonogramKeyWidget->SetVisibility(false);
+	}
+	HighlightAllSelectedCubes();
 }

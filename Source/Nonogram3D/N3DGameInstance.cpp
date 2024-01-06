@@ -38,6 +38,7 @@ void UN3DGameInstance::Solve()
 			TMap<int32, FColor> Solution = Nonogram->GetCurrentSolution();
 			if (!Solution.IsEmpty())
 			{
+				Nonogram->SelectedCubes.Empty();
 				for (auto Cube : Solution)
 				{
 					Nonogram->SelectCube(Cube.Key);
@@ -50,7 +51,7 @@ void UN3DGameInstance::Solve()
 					const bool bSelected = Nonogram->SelectedCubes.Contains(Cube.Value);
 					Nonogram->CubeInstances->SetCustomData(Cube.Value, bSelected ? FilledInactive : EmptyInactive);
 				}
-				Nonogram->SelectPlane(ESelectionType::X, 0);
+				Nonogram->FinishSolving();
 			}
 		}
 	}
