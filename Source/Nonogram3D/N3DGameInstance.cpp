@@ -4,6 +4,8 @@
 
 #include "N3DNonogram.h"
 #include "N3DNonogramColorScheme.h"
+#include "N3DNonogramList.h"
+#include "N3DSaveSubsystem.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -14,17 +16,20 @@ void UN3DGameInstance::SetMode(const EGameMode NewMode)
 	Mode = NewMode;
 	if (Mode != EGameMode::Solving)
 	{
-		SelectedSolution = FNonogram();
+		SelectedSolution = -1;
 	}
 	OnModeChanged.Broadcast(Mode);
 }
 
-void UN3DGameInstance::StartSolving(const FNonogram& Solution)
+void UN3DGameInstance::StartSolving(const int SolutionIndex)
 {
-	if (ensure(Solution.IsValid()))
+	if (UN3DSaveSubsystem* SaveSubsystem = GetSubsystem<UN3DSaveSubsystem>())
 	{
-		SelectedSolution = Solution;
-		SetMode(EGameMode::Solving);
+		if (SaveSubsystem->GetNonograms()->Nonograms.IsValidIndex(SolutionIndex))
+		{
+			SelectedSolution = SolutionIndex;
+			SetMode(EGameMode::Solving);
+		}
 	}
 }
 

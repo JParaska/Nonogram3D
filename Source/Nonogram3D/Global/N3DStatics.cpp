@@ -4,13 +4,15 @@
 #include "N3DStatics.h"
 
 #include "N3DGameInstance.h"
+#include "N3DNonogramList.h"
+#include "N3DSaveSubsystem.h"
 
 #include "GeneralProjectSettings.h"
 #include "Kismet/GameplayStatics.h"
 
 ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, const FString& NonogramName, const TMap<int32, FColor> Solution)
 {
-	UN3DGameInstance* Instance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(WorldContextObject));
+	UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject);
 	if (!Instance || Instance->GetMode() != EGameMode::Editor)
 	{
 		return ESaveLoadError::NotInEditMode;
@@ -69,4 +71,40 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	}
 
 	return ESaveLoadError::FailedToSave;
+}
+
+bool UN3DStatics::GetNonogramName(const UObject* WorldContextObject, const int Index, FString& NonogramName)
+{
+	FNonogram Nonogram;
+	if (GetNonogram(WorldContextObject, Index, Nonogram))
+	{
+		NonogramName = Nonogram.NonogramName;
+		return true;
+	}
+
+	NonogramName = "";
+	return false;
+}
+
+bool UN3DStatics::GetNonogram(const UObject* WorldContextObject, const int Index, FNonogram& Nonogram)
+{
+	if (UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject))
+	{
+		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			if (SaveSubsystem->GetNonograms()->Nonograms.IsValidIndex(Index))
+			{
+				Nonogram = SaveSubsystem->GetNonograms()->Nonograms[Index];
+				return true;
+			}
+		}
+	}
+
+	Nonogram = FNonogram();
+	return false;
+}
+
+UN3DGameInstance* UN3DStatics::GetN3DGameInstance(const UObject* WorldContextObject)
+{
+	return Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(WorldContextObject));
 }

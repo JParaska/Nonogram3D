@@ -6,6 +6,8 @@
 #include "N3DGameInstance.h"
 #include "N3DNonogramColorScheme.h"
 #include "N3DNonogramInput.h"
+#include "N3DSaveSubsystem.h"
+#include "N3DStatics.h"
 #include "Nonogram3DTypes.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
@@ -311,29 +313,35 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 	case EGameMode::Solving:
 		CurrentSolution.Empty();
 		SelectedCubes.Empty();
+
+		
 		if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
 		{
-			FNonogram Nonogram = GameInstance->GetSelectedSolution();
-			SetSolution(Nonogram.Nonogram.LoadSynchronous());
-			
-			CurrentSize = Nonogram.Size;
-			GenerateNonogramKey();
-			
-			SpawnCubeInstances();
-			
-			if (NonogramKeyWidget)
+			CurrentNonogramIndex = GameInstance->GetSelectedSolution();
+			FNonogram Nonogram;
+			if (UN3DStatics::GetNonogram(this, CurrentNonogramIndex, Nonogram))
 			{
-				NonogramKeyWidget->SetVisibility(true);
-			}
-			CurrentSelection = { ESelectionType::X, 0 };
-			SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
-			
-			SolvingStartTime.Reset();
-			SolvingEndTime.Reset();
+				SetSolution(Nonogram.Nonogram.LoadSynchronous());
 
-			if (Controller)
-			{
-				EnableInput(Controller);
+				CurrentSize = Nonogram.Size;
+				GenerateNonogramKey();
+
+				SpawnCubeInstances();
+
+				if (NonogramKeyWidget)
+				{
+					NonogramKeyWidget->SetVisibility(true);
+				}
+				CurrentSelection = { ESelectionType::X, 0 };
+				SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
+
+				SolvingStartTime.Reset();
+				SolvingEndTime.Reset();
+
+				if (Controller)
+				{
+					EnableInput(Controller);
+				}
 			}
 		}
 		break;
@@ -632,4 +640,16 @@ void AN3DNonogram::FinishSolving() {
 		NonogramKeyWidget->SetVisibility(false);
 	}
 	HighlightAllSelectedCubes();
+
+	if (GetGameInstance())
+	{
+		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			float CompletitionTime;
+			if (GetNonogramSolvingElapsedTime(CompletitionTime))
+			{
+				SaveGameSubsystem->NonogramSolved(CurrentNonogramIndex, CompletitionTime);
+			}
+		}
+	}
 }

@@ -27,7 +27,12 @@ public class Nonogram3D : ModuleRules
 
                 "Nonogram3D/Gameplay",
 
-                "Nonogram3D/Player"
+                "Nonogram3D/Player",
+				
+				"Nonogram3D/Subsystem",
+                "Nonogram3D/Subsystem/SaveGame",
+				
+				"Nonogram3D/Global"
         });
     }
 }

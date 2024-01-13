@@ -59,7 +59,7 @@ struct FNonogram {
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText NonogramName = FText::GetEmpty();
+	FString NonogramName = "";
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntVector Size = FIntVector(0);

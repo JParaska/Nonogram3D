@@ -25,9 +25,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> PlayerInputMappingContext;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
-	TObjectPtr<UN3DNonogramList> Nonograms;
 #pragma endregion
 
 #pragma region Methods

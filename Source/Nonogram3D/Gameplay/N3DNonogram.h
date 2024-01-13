@@ -90,6 +90,8 @@ protected:
 
 	TMap<int32, FColor> CurrentSolution;
 
+	int CurrentNonogramIndex;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Nonogram")
 	TSet<int32> SelectedCubes;
 
