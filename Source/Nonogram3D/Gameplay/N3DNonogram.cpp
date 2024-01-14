@@ -113,6 +113,7 @@ void AN3DNonogram::Resize(const FIntVector& Size)
 	CurrentSize = Size;
 	SpawnCubeInstances();
 	DefaultMaterialOnAllCubes();
+	RepositionPawn();
 }
 
 bool AN3DNonogram::GetNonogramSolvingElapsedTime(float& SolvingElapsedTime) {
@@ -342,6 +343,8 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 				{
 					EnableInput(Controller);
 				}
+
+				RepositionPawn();
 			}
 		}
 		break;
@@ -649,6 +652,21 @@ void AN3DNonogram::FinishSolving() {
 			if (GetNonogramSolvingElapsedTime(CompletitionTime))
 			{
 				SaveGameSubsystem->NonogramSolved(CurrentNonogramIndex, CompletitionTime);
+			}
+		}
+	}
+}
+
+void AN3DNonogram::RepositionPawn() {
+	if (Mode == EGameMode::Solving || Mode == EGameMode::Editor)
+	{
+		if (Controller)
+		{
+			if (APawn* Pawn = Controller->GetPawn())
+			{
+				const FVector NewPawnPosition = GetActorLocation();
+				const FVector Offset = FVector(CurrentSize) * 50.0f;
+				Pawn->SetActorLocation(NewPawnPosition + Offset);
 			}
 		}
 	}

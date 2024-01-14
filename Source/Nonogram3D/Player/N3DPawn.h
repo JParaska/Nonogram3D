@@ -32,7 +32,7 @@ protected:
 	float MinSpringArmLength = 1000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
-	float MaxSpingArmLength = 3000.0f;
+	float MaxSpingArmLength = 7000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	float CameraZoomStep = 50.0f;

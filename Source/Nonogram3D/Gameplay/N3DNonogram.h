@@ -202,5 +202,7 @@ protected:
 	void GenerateNonogramKeyForPlane(const ESelectionType Plane);
 
 	void FinishSolving();
+
+	void RepositionPawn();
 #pragma endregion
 };
