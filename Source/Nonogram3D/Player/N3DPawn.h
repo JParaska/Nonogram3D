@@ -8,6 +8,7 @@
 #include "N3DPawn.generated.h"
 
 class AN3DNonogram;
+class AN3DDirectionControlHint;
 class UN3DPlayerInput;
 
 class UCameraComponent;
@@ -48,6 +49,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Nonogram")
 	TObjectPtr<AN3DNonogram> Nonogram;
+
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Nonogram")
+	TObjectPtr<AN3DDirectionControlHint> DirectionControlHint;
 
 #pragma endregion
 

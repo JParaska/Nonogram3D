@@ -4,6 +4,7 @@
 #include "N3DPawn.h"
 
 #include "N3DNonogram.h"
+#include "N3DDirectionControlHint.h"
 #include "N3DPlayerInput.h"
 
 #include "Camera/CameraComponent.h"
@@ -59,6 +60,10 @@ void AN3DPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		if (Nonogram)
 		{
 			Nonogram->EnableInput(PC);
+		}
+		if (DirectionControlHint)
+		{
+			DirectionControlHint->EnableInput(PC);
 		}
 	}
 }
