@@ -47,4 +47,7 @@ public:
 	UN3DNonogramList* GetNonograms() const { return Nonograms; }
 
 	void NonogramSolved(const int Index, const float SolvingTime);
+
+	TArray<FLinearColor> GetEditorColors() const;
+	void AddEditorColor(const FLinearColor& Color);
 };

@@ -78,3 +78,16 @@ void UN3DSaveSubsystem::NonogramSolved(const int Index, const float Completition
 		OnGameSaved.Broadcast(bSuccess);
 	}));
 }
+
+TArray<FLinearColor> UN3DSaveSubsystem::GetEditorColors() const
+{
+	return SaveGame ? SaveGame->LastUsedEditorColors : TArray<FLinearColor>();
+}
+
+void UN3DSaveSubsystem::AddEditorColor(const FLinearColor& Color)
+{
+	if (SaveGame)
+	{
+		SaveGame->AddEditorColor(Color);
+	}
+}

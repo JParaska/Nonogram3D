@@ -18,7 +18,7 @@ class UWidgetComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChanged, const ESelectionType, Type, const int32, Index);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNonogramSolvingStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNonogramSolvingEnded);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCubeSelected, const int32, CubeIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCubeSelected, const int32, CubeIndex, const bool, bSelected);
 
 USTRUCT(BlueprintType)
 struct FSelectionPlane
@@ -195,7 +195,7 @@ protected:
 
 	void DefaultMaterialOnAllCubes();
 
-	void SelectCube(const int32 CubeIndex);
+	bool SelectCube(const int32 CubeIndex);
 
 	void GenerateNonogramKey();
 

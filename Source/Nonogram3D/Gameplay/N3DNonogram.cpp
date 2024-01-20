@@ -235,8 +235,8 @@ void AN3DNonogram::SelectCube()
 						SolvingStartTime = UGameplayStatics::GetTimeSeconds(this);
 						OnNonogramSolvingStarted.Broadcast();
 					}
-					SelectCube(Cubes[InstanceCoords]);
-					OnCubeSelected.Broadcast(Cubes[InstanceCoords]);
+					const bool bSelected = SelectCube(Cubes[InstanceCoords]);
+					OnCubeSelected.Broadcast(Cubes[InstanceCoords], bSelected);
 				}
 			}
 		}
@@ -497,8 +497,10 @@ void AN3DNonogram::DefaultMaterialOnAllCubes()
 	SelectPlane(ESelectionType::X, 0);
 }
 
-void AN3DNonogram::SelectCube(const int32 CubeIndex)
+bool AN3DNonogram::SelectCube(const int32 CubeIndex)
 {
+	bool bSelected = false;
+
 	switch (Mode)
 	{
 	case EGameMode::Solving:
@@ -511,6 +513,7 @@ void AN3DNonogram::SelectCube(const int32 CubeIndex)
 		{
 			CubeInstances->SetCustomData(CubeIndex, ColorScheme->FilledActive.Get());
 			SelectedCubes.Add(CubeIndex);
+			bSelected = true;
 		}
 		CubeInstances->MarkRenderStateDirty();
 
@@ -533,12 +536,16 @@ void AN3DNonogram::SelectCube(const int32 CubeIndex)
 			ColorData[2] = SelectedColor.B;
 			CubeInstances->SetCustomData(CubeIndex, ColorData);
 			CurrentSolution.Add(CubeIndex, SelectedColor);
+			UN3DStatics::AddNonogramEditorColor(this, SelectedColor);
+			bSelected = true;
 		}
 		CubeInstances->MarkRenderStateDirty();
 		break;
 	default:
 		break;
 	}
+
+	return bSelected;
 }
 
 void AN3DNonogram::GenerateNonogramKey()

@@ -73,6 +73,31 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	return ESaveLoadError::FailedToSave;
 }
 
+void UN3DStatics::AddNonogramEditorColor(const UObject* WorldContextObject, const FLinearColor& Color)
+{
+	if (UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject))
+	{
+		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			SaveSubsystem->AddEditorColor(Color);
+		}
+	}
+}
+
+void UN3DStatics::GetNonogrameditorColors(const UObject* WorldContextObject, TArray<FLinearColor>& EditorColors)
+{
+	if (UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject))
+	{
+		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			EditorColors = SaveSubsystem->GetEditorColors();
+			return;
+		}
+	}
+
+	EditorColors = TArray<FLinearColor>();
+}
+
 bool UN3DStatics::GetNonogramName(const UObject* WorldContextObject, const int Index, FString& NonogramName)
 {
 	FNonogram Nonogram;

@@ -19,5 +19,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<FSaveNonogramStatus> Nonograms;
+
+	TArray<FLinearColor> LastUsedEditorColors;
+
+	UN3DSaveGame();
+
+	void AddEditorColor(const FLinearColor& Color);
 	
 };
