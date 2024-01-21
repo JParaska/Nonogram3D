@@ -306,16 +306,15 @@ void AN3DNonogram::EndHighlight()
 void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 {
 	Mode = NewMode;
+	CurrentSolution.Empty();
+	SelectedCubes.Empty();
 
 	switch (Mode)
 	{
 	case EGameMode::MainMenu:
+		DefaultMaterialOnAllCubes();
 		break;
-	case EGameMode::Solving:
-		CurrentSolution.Empty();
-		SelectedCubes.Empty();
-
-		
+	case EGameMode::Solving:		
 		if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
 		{
 			CurrentNonogramIndex = GameInstance->GetSelectedSolution();
@@ -349,8 +348,6 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 		}
 		break;
 	case EGameMode::Editor:
-		CurrentSolution.Empty();
-		SelectedCubes.Empty();
 		Resize(FIntVector(10));
 		break;
 	default:
