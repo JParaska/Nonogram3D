@@ -306,8 +306,10 @@ void AN3DNonogram::EndHighlight()
 void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 {
 	Mode = NewMode;
-	CurrentSolution.Empty();
-	SelectedCubes.Empty();
+	CurrentSolution.Reset();
+	SelectedCubes.Reset();
+	NonogramKey.Reset();
+	SelectPlane(ESelectionType::X, 0);
 
 	switch (Mode)
 	{
