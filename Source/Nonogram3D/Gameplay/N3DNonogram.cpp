@@ -150,6 +150,29 @@ bool AN3DNonogram::CheckSolution() const
 	return true;
 }
 
+void AN3DNonogram::StoreProgress() const
+{
+	// Right now, only solving nonogramcan store progress
+	if (Mode != EGameMode::Solving)
+	{
+		return;
+	}
+
+	// don't store progress, if solution is finished
+	if (CheckSolution())
+	{
+		return;
+	}
+
+	if (GetGameInstance())
+	{
+		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			SaveGameSubsystem->SaveSolvingProgress(CurrentNonogramIndex, SelectedCubes);
+		}
+	}
+}
+
 void AN3DNonogram::BeginPlay()
 {
 	Super::BeginPlay();
@@ -303,7 +326,7 @@ void AN3DNonogram::EndHighlight()
 	SelectPlane(LastSelection.Key, LastSelection.Value);
 }
 
-void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
+void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode PreviousMode)
 {
 	Mode = NewMode;
 	CurrentSolution.Reset();
@@ -334,6 +357,13 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode)
 				{
 					NonogramKeyWidget->SetVisibility(true);
 				}
+
+				// Load progress if any is saved
+				if (UN3DSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UN3DSaveSubsystem>())
+				{
+					SaveSubsystem->GetSavedProgress(CurrentNonogramIndex, SelectedCubes);
+				}
+
 				CurrentSelection = { ESelectionType::X, 0 };
 				SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
 

@@ -152,6 +152,9 @@ public:
 	/** Returns true if all (and only) cubes in solution are selected */
 	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Solving")
 	bool CheckSolution() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Solving")
+	void StoreProgress() const;
 #pragma endregion
 
 protected:
@@ -179,7 +182,7 @@ protected:
 	void EndHighlight();
 
 	UFUNCTION()
-	void OnGameModeChanged(const EGameMode NewMode);
+	void OnGameModeChanged(const EGameMode NewMode, const EGameMode PreviousMode);
 
 	void ResetSelectionCollection(const FIntVector& Size);
 

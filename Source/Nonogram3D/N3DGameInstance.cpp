@@ -13,12 +13,15 @@
 
 void UN3DGameInstance::SetMode(const EGameMode NewMode)
 {
+	const EGameMode PreviousMode = Mode;
 	Mode = NewMode;
+
 	if (Mode != EGameMode::Solving)
 	{
 		SelectedSolution = -1;
 	}
-	OnModeChanged.Broadcast(Mode);
+	
+	OnModeChanged.Broadcast(Mode, PreviousMode);
 }
 
 void UN3DGameInstance::StartSolving(const int SolutionIndex)

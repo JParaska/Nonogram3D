@@ -14,6 +14,7 @@ enum class ENonogramStatus : uint8
 {
 	Locked,
 	Unlocked,
+	InProgress,
 	Completed
 };
 
@@ -29,4 +30,27 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float CompletitionTime = TNumericLimits<float>::Max();
+};
+
+USTRUCT(BlueprintType)
+struct FSavedSolvingProgress {
+
+	GENERATED_BODY()
+
+public:
+
+	FSavedSolvingProgress() {}
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int Index = -1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TSet<int32> SelectedCubes;
+
+	bool IsSet() const { return Index >= 0 && !SelectedCubes.IsEmpty(); }
+
+	void Reset() {
+		Index = -1;
+		SelectedCubes.Reset();
+	}
 };

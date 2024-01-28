@@ -7,7 +7,7 @@
 #include "Nonogram3DTypes.h"
 #include "N3DGameInstance.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModeChanged, const EGameMode, NewMode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnModeChanged, const EGameMode, NewMode, const EGameMode, PreviousMode);
 
 UCLASS()
 class NONOGRAM3D_API UN3DGameInstance : public UGameInstance

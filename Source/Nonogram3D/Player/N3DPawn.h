@@ -64,6 +64,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	AN3DNonogram* GetNonogram() const { return Nonogram; }
+
 protected:
 	
 	virtual void BeginPlay() override;

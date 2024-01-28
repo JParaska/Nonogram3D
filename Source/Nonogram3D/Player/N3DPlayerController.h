@@ -7,6 +7,7 @@
 #include "N3DPlayerController.generated.h"
 
 class AN3DNonogram;
+class AN3DPawn;
 class UN3DNonogramList;
 class UN3DPlayerInput;
 
@@ -25,6 +26,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> PlayerInputMappingContext;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Nonogram")
+	TObjectPtr<AN3DPawn> N3DPawn;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Nonogram")
+	TObjectPtr<AN3DNonogram> N3DNonogram;
 #pragma endregion
 
 #pragma region Methods
@@ -36,6 +43,9 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 
 #pragma endregion
 	

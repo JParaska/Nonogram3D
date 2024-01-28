@@ -11,7 +11,7 @@ class UN3DNonogramList;
 class UN3DSaveGame;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSaveGameLoaded, const bool, bSuccess);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameSaved, const bool, bSuccess);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnGameSaved, const bool, bSuccess);
 
 /**
  * 
@@ -20,11 +20,6 @@ UCLASS(Abstract, Blueprintable)
 class NONOGRAM3D_API UN3DSaveSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(BlueprintAssignable)
-	FOnGameSaved OnGameSaved;
 
 protected:
 
@@ -40,6 +35,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void LoadSavedData(const FOnSaveGameLoaded& Callback);
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	void SaveGameData(const FOnGameSaved& Callback);
+
 	UFUNCTION(BlueprintPure, Category = "SaveGame")
 	FSaveNonogramStatus GetNonogramStatus(const int Index) const;
 
@@ -50,4 +48,11 @@ public:
 
 	TArray<FLinearColor> GetEditorColors() const;
 	void AddEditorColor(const FLinearColor& Color);
+
+	void SaveSolvingProgress(const int Index, const TSet<int32>& SelectedCubes);
+
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	bool IsAnyNonogramInProgress(int& Index) const;
+
+	bool GetSavedProgress(const int Index, TSet<int32>& SelectedCubes) const;
 };

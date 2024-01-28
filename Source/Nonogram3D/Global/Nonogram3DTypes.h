@@ -100,6 +100,6 @@ public:
 
 FORCEINLINE uint32 GetTypeHash(const FNonogramKey& NonogramKey)
 {
-	uint32 Hash = FCrc::MemCrc32(&NonogramKey, sizeof(FNonogramKey));
+	uint32 Hash = HashCombine(::GetTypeHash(NonogramKey.Selection), HashCombine(::GetTypeHash(NonogramKey.Index.X), ::GetTypeHash(NonogramKey.Index.Y)));
 	return Hash;
 }

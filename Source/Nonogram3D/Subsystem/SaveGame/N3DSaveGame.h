@@ -20,7 +20,11 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<FSaveNonogramStatus> Nonograms;
 
+	UPROPERTY(VisibleAnywhere)
 	TArray<FLinearColor> LastUsedEditorColors;
+
+	UPROPERTY(VisibleAnywhere)
+	FSavedSolvingProgress SolvingProgress;
 
 	UN3DSaveGame();
 

@@ -44,6 +44,21 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 		}));
 }
 
+void UN3DSaveSubsystem::SaveGameData(const FOnGameSaved& Callback)
+{
+	UGameplayStatics::AsyncSaveGameToSlot(SaveGame, SLOT_NAME, SLOT_INDEX, FAsyncSaveGameToSlotDelegate::CreateLambda([&, Callback](const FString& SlotName, const int32 Index, bool bSuccess) {
+		if (bSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Game saved"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Game failed to save"));
+		}
+		Callback.ExecuteIfBound(bSuccess);
+	}));
+}
+
 FSaveNonogramStatus UN3DSaveSubsystem::GetNonogramStatus(const int Index) const
 {
 	if (!ensure(SaveGame))
@@ -60,23 +75,34 @@ FSaveNonogramStatus UN3DSaveSubsystem::GetNonogramStatus(const int Index) const
 
 void UN3DSaveSubsystem::NonogramSolved(const int Index, const float CompletitionTime)
 {
-	if (!SaveGame || SaveGame->Nonograms.IsValidIndex(Index))
+	if (!SaveGame || !SaveGame->Nonograms.IsValidIndex(Index))
 	{
-		OnGameSaved.Broadcast(false);
+		return;
 	}
 
 	FSaveNonogramStatus& SolvedNonogramState = SaveGame->Nonograms[Index];
 	SolvedNonogramState.Status = ENonogramStatus::Completed;
-	SolvedNonogramState.CompletitionTime = CompletitionTime;
+	
+	// If new completition time is faster, update it
+	if (SolvedNonogramState.CompletitionTime > CompletitionTime)
+	{
+		SolvedNonogramState.CompletitionTime = CompletitionTime;
+	}
+	
+	// If next nonogram is locked, unlock it
 	if (SaveGame->Nonograms.IsValidIndex(Index + 1))
 	{
-		SaveGame->Nonograms[Index + 1].Status = ENonogramStatus::Unlocked;
+		if (SaveGame->Nonograms[Index + 1].Status == ENonogramStatus::Locked)
+		{
+			SaveGame->Nonograms[Index + 1].Status = ENonogramStatus::Unlocked;
+		}
 	}
 
-	UGameplayStatics::AsyncSaveGameToSlot(SaveGame, SLOT_NAME, SLOT_INDEX, FAsyncSaveGameToSlotDelegate::CreateLambda([&](const FString& SlotName, const int32 Index, bool bSuccess) {
-		UE_LOG(LogTemp, Warning, TEXT("Game saved"));
-		OnGameSaved.Broadcast(bSuccess);
-	}));
+	// If finished nonogram had saved progress, reset progress
+	if (SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index)
+	{
+		SaveGame->SolvingProgress.Reset();
+	}
 }
 
 TArray<FLinearColor> UN3DSaveSubsystem::GetEditorColors() const
@@ -90,4 +116,41 @@ void UN3DSaveSubsystem::AddEditorColor(const FLinearColor& Color)
 	{
 		SaveGame->AddEditorColor(Color);
 	}
+}
+
+void UN3DSaveSubsystem::SaveSolvingProgress(const int Index, const TSet<int32>& SelectedCubes)
+{
+	if (SaveGame && SaveGame->Nonograms.IsValidIndex(Index))
+	{
+		SaveGame->SolvingProgress.Index = Index;
+		SaveGame->SolvingProgress.SelectedCubes.Append(SelectedCubes);
+
+		if (SaveGame->Nonograms[Index].Status == ENonogramStatus::Unlocked)
+		{
+			SaveGame->Nonograms[Index].Status = ENonogramStatus::InProgress;
+		}
+	}
+}
+
+bool UN3DSaveSubsystem::IsAnyNonogramInProgress(int& Index) const
+{
+	if (SaveGame && SaveGame->SolvingProgress.IsSet())
+	{
+		Index = SaveGame->SolvingProgress.Index;
+		return true;
+	}
+	return false;
+}
+
+bool UN3DSaveSubsystem::GetSavedProgress(const int Index, TSet<int32>& SelectedCubes) const
+{
+	if (SaveGame && SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index)
+	{
+		SelectedCubes.Reset();
+		SelectedCubes.Reserve(SaveGame->SolvingProgress.SelectedCubes.Num());
+		SelectedCubes.Append(SaveGame->SolvingProgress.SelectedCubes);
+		return true;
+	}
+
+	return false;
 }
