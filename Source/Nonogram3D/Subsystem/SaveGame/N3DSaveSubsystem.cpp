@@ -118,7 +118,7 @@ void UN3DSaveSubsystem::AddEditorColor(const FLinearColor& Color)
 	}
 }
 
-void UN3DSaveSubsystem::SaveSolvingProgress(const int Index, const TSet<int32>& SelectedCubes)
+void UN3DSaveSubsystem::StoreSolvingProgress(const int Index, const TSet<int32>& SelectedCubes)
 {
 	if (SaveGame && SaveGame->Nonograms.IsValidIndex(Index))
 	{
@@ -132,6 +132,28 @@ void UN3DSaveSubsystem::SaveSolvingProgress(const int Index, const TSet<int32>& 
 	}
 }
 
+void UN3DSaveSubsystem::DiscardEditorProgress()
+{
+	if (SaveGame)
+	{
+		SaveGame->EditorProgress.Reset();
+	}
+}
+
+void UN3DSaveSubsystem::StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution)
+{
+	if (SaveGame)
+	{
+		SaveGame->EditorProgress.Reset();
+
+		FSavedEditorProgress EditorProgress;
+		EditorProgress.Size = Size;
+		EditorProgress.Solution = EditorSolution;
+
+		SaveGame->EditorProgress = EditorProgress;
+	}
+}
+
 bool UN3DSaveSubsystem::IsAnyNonogramInProgress(int& Index) const
 {
 	if (SaveGame && SaveGame->SolvingProgress.IsSet())
@@ -142,13 +164,32 @@ bool UN3DSaveSubsystem::IsAnyNonogramInProgress(int& Index) const
 	return false;
 }
 
-bool UN3DSaveSubsystem::GetSavedProgress(const int Index, TSet<int32>& SelectedCubes) const
+bool UN3DSaveSubsystem::GetSavedSolvingProgress(const int Index, TSet<int32>& SelectedCubes) const
 {
 	if (SaveGame && SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index)
 	{
 		SelectedCubes.Reset();
-		SelectedCubes.Reserve(SaveGame->SolvingProgress.SelectedCubes.Num());
 		SelectedCubes.Append(SaveGame->SolvingProgress.SelectedCubes);
+		return true;
+	}
+
+	return false;
+}
+
+bool UN3DSaveSubsystem::IsEditorInProgress() const
+{
+	return SaveGame && SaveGame->EditorProgress.IsSet();
+}
+
+bool UN3DSaveSubsystem::GetSavedEditorProgress(FIntVector& Size, TMap<int32, FColor>& EditorSolution) const
+{
+	if (SaveGame && SaveGame->EditorProgress.IsSet())
+	{
+		Size = SaveGame->EditorProgress.Size;
+
+		EditorSolution.Reset();
+		EditorSolution.Append(SaveGame->EditorProgress.Solution);
+
 		return true;
 	}
 

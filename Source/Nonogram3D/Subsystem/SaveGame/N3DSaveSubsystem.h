@@ -49,10 +49,33 @@ public:
 	TArray<FLinearColor> GetEditorColors() const;
 	void AddEditorColor(const FLinearColor& Color);
 
-	void SaveSolvingProgress(const int Index, const TSet<int32>& SelectedCubes);
+	/**
+	* Stores current solving progress in save file.
+	* This DOESN'T save data on disk.
+	*/
+	void StoreSolvingProgress(const int Index, const TSet<int32>& SelectedCubes);
+
+	/**
+	* Discards current editor progress from save file.
+	* This DOESN'T save data on disk.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	void DiscardEditorProgress();
+
+	/**
+	* Stores current editor progress in save file.
+	* This DOESN'T save data on disk.
+	*/
+	void StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution);
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	bool IsAnyNonogramInProgress(int& Index) const;
 
-	bool GetSavedProgress(const int Index, TSet<int32>& SelectedCubes) const;
+	bool GetSavedSolvingProgress(const int Index, TSet<int32>& SelectedCubes) const;
+
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	bool IsEditorInProgress() const;
+
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	bool GetSavedEditorProgress(FIntVector& Size, TMap<int32, FColor>& EditorSolution) const;
 };

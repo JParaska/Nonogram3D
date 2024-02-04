@@ -26,6 +26,9 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	FSavedSolvingProgress SolvingProgress;
 
+	UPROPERTY(VisibleAnywhere)
+	FSavedEditorProgress EditorProgress;
+
 	UN3DSaveGame();
 
 	void AddEditorColor(const FLinearColor& Color);

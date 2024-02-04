@@ -19,7 +19,8 @@ enum class ENonogramStatus : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FSaveNonogramStatus {
+struct FSaveNonogramStatus
+{
 
 	GENERATED_BODY()
 
@@ -33,7 +34,8 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FSavedSolvingProgress {
+struct FSavedSolvingProgress
+{
 
 	GENERATED_BODY()
 
@@ -48,9 +50,33 @@ public:
 	TSet<int32> SelectedCubes;
 
 	bool IsSet() const { return Index >= 0 && !SelectedCubes.IsEmpty(); }
-
-	void Reset() {
+	
+	void Reset()
+	{
 		Index = -1;
 		SelectedCubes.Reset();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FSavedEditorProgress
+{
+
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FIntVector Size = FIntVector::NoneValue;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TMap<int32, FColor> Solution;
+
+	bool IsSet() const { return Size != FIntVector::NoneValue && !Solution.IsEmpty(); }
+
+	void Reset()
+	{
+		Size = FIntVector::NoneValue;
+		Solution.Reset();
 	}
 };

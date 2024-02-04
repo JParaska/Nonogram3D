@@ -142,6 +142,20 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
 	void Resize(const FIntVector& Size);
+
+	/**
+	* Discards current editor progress from save file.
+	* This DOESN'T save data on disk.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
+	void DiscardEditorProgress() const;
+
+	/**
+	* Stores current editor progress into save file.
+	* This DOESN'T save data on disk.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
+	void StoreEditorProgress() const;
 #pragma endregion
 
 #pragma region NonogramSolving
@@ -153,8 +167,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Nonogram|Nonogram Solving")
 	bool CheckSolution() const;
 
+	/**
+	* Stores current solving progress in save file.
+	* This DOESN'T save data on disk.
+	*/
 	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Solving")
-	void StoreProgress() const;
+	void StoreSolvingProgress() const;
 #pragma endregion
 
 protected:

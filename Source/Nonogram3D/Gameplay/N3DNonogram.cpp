@@ -110,10 +110,64 @@ void AN3DNonogram::Resize(const FIntVector& Size)
 		return;
 	}
 
+	// Remember current editor state
+	TMap<FIntVector, int32> PreviousCubes = MoveTemp(Cubes);
+	TMap<int32, FColor> PreviousSolution = MoveTemp(CurrentSolution);
+
 	CurrentSize = Size;
 	SpawnCubeInstances();
 	DefaultMaterialOnAllCubes();
 	RepositionPawn();
+
+	// Project old setup to new size
+	for (TPair<FIntVector, int32> Cube : PreviousCubes)
+	{
+		if (Cubes.Contains(Cube.Key) // Cube is still in bounds
+			&& PreviousSolution.Contains(Cube.Value)) // Cube was assigned a color
+		{
+			CurrentSolution.Add(Cubes[Cube.Key], PreviousSolution[Cube.Value]);
+		}
+	}
+
+	SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
+}
+
+void AN3DNonogram::DiscardEditorProgress() const
+{
+	if (Mode != EGameMode::Editor)
+	{
+		return;
+	}
+
+	if (GetGameInstance())
+	{
+		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			SaveGameSubsystem->DiscardEditorProgress();
+		}
+	}
+}
+
+void AN3DNonogram::StoreEditorProgress() const
+{
+	if (Mode != EGameMode::Editor)
+	{
+		return;
+	}
+
+	// We are not saving empty progress
+	if (CurrentSolution.IsEmpty())
+	{
+		return;
+	}
+
+	if (GetGameInstance())
+	{
+		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			SaveGameSubsystem->StoreEditorProgress(CurrentSize, CurrentSolution);
+		}
+	}
 }
 
 bool AN3DNonogram::GetNonogramSolvingElapsedTime(float& SolvingElapsedTime) {
@@ -150,9 +204,8 @@ bool AN3DNonogram::CheckSolution() const
 	return true;
 }
 
-void AN3DNonogram::StoreProgress() const
+void AN3DNonogram::StoreSolvingProgress() const
 {
-	// Right now, only solving nonogramcan store progress
 	if (Mode != EGameMode::Solving)
 	{
 		return;
@@ -168,7 +221,7 @@ void AN3DNonogram::StoreProgress() const
 	{
 		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
 		{
-			SaveGameSubsystem->SaveSolvingProgress(CurrentNonogramIndex, SelectedCubes);
+			SaveGameSubsystem->StoreSolvingProgress(CurrentNonogramIndex, SelectedCubes);
 		}
 	}
 }
@@ -187,9 +240,7 @@ void AN3DNonogram::BeginPlay()
 		GameInstance->OnModeChanged.AddDynamic(this, &ThisClass::OnGameModeChanged);
 	}
 
-	// TODO get puzzle info on game start
-
-	/// Temp, setup nonogram based on current puzzle info, move to OnGameModeChanged
+	// Init default setup so there is something in the scene
 	CurrentSize = FIntVector(10);
 	SpawnCubeInstances();
 	CurrentSelection = { ESelectionType::X, 9 };
@@ -361,7 +412,7 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 				// Load progress if any is saved
 				if (UN3DSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UN3DSaveSubsystem>())
 				{
-					SaveSubsystem->GetSavedProgress(CurrentNonogramIndex, SelectedCubes);
+					SaveSubsystem->GetSavedSolvingProgress(CurrentNonogramIndex, SelectedCubes);
 				}
 
 				CurrentSelection = { ESelectionType::X, 0 };
@@ -380,6 +431,24 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 		}
 		break;
 	case EGameMode::Editor:
+		// Load progress if any is saved
+		if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			if (UN3DSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UN3DSaveSubsystem>())
+			{
+				FIntVector SavedSize;
+				TMap<int32, FColor> SavedSolution;
+				if (SaveSubsystem->GetSavedEditorProgress(SavedSize, SavedSolution))
+				{
+					Resize(SavedSize);
+					CurrentSolution.Append(SavedSolution); // Current solution is reset in Resize call
+					SelectPlane(CurrentSelection.Key, CurrentSelection.Value);
+					break;
+				}
+			}
+		}
+
+		// Otherwise set default size
 		Resize(FIntVector(10));
 		break;
 	default:
