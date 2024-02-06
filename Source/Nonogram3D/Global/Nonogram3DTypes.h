@@ -31,6 +31,7 @@ enum class ESaveLoadError : uint8 {
 	Success,
 	NotInEditMode,
 	EmptySolution,
+	InvalidSize,
 	InvalidName,
 	InvalidPath,
 	FailedToSave,

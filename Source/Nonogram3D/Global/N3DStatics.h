@@ -25,7 +25,7 @@ class NONOGRAM3D_API UN3DStatics : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
-	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, const TMap<int32, FColor> Solution);
+	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, const FIntVector& Size, const TMap<int32, FColor> Solution);
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
 	static void AddNonogramEditorColor(const UObject* WorldContextObject, const FLinearColor& Color);

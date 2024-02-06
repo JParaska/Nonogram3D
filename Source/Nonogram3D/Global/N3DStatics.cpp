@@ -10,7 +10,7 @@
 #include "GeneralProjectSettings.h"
 #include "Kismet/GameplayStatics.h"
 
-ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, const FString& NonogramName, const TMap<int32, FColor> Solution)
+ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, const FString& NonogramName, const FIntVector& Size, const TMap<int32, FColor> Solution)
 {
 	UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject);
 	if (!Instance || Instance->GetMode() != EGameMode::Editor)
@@ -28,7 +28,16 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 		return ESaveLoadError::EmptySolution;
 	}
 
+	if (Size == FIntVector::ZeroValue)
+	{
+		return ESaveLoadError::InvalidSize;
+	}
+
 	TArray<FString> StringSolution;
+	StringSolution.Reserve(Solution.Num() + 2); // Solution size (1) + Data table header (1) + number of cubes in Solution
+	
+	StringSolution.Add(Size.ToString());
+
 	StringSolution.Add("---,CubeIndex,FinalColor");
 	int i = 0;
 	for (const TPair<int32, FColor>& Cube : Solution)
@@ -42,7 +51,7 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	// TODO save also size
 
 	FString Path;
-	const FString NonogramFileName = NonogramName + FString(".csv");
+	const FString NonogramFileName = NonogramName + FString(".n3d");
 
 #if PLATFORM_WINDOWS
 	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
