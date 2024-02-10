@@ -34,6 +34,17 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FSavedCreatedNonogramsInfo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FString CreatedNonogramName;
+};
+
+USTRUCT(BlueprintType)
 struct FSavedSolvingProgress
 {
 

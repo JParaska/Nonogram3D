@@ -25,7 +25,9 @@ class NONOGRAM3D_API UN3DStatics : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
-	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, const FIntVector& Size, const TMap<int32, FColor> Solution);
+	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, FIntVector Size, TMap<int32,FColor> Solution);
+
+	static void FindMyCreatedNonograms(const UObject* WorldContextObject, TArray<FNonogram>& MyCreatedNonograms);
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
 	static void AddNonogramEditorColor(const UObject* WorldContextObject, const FLinearColor& Color);
@@ -37,6 +39,8 @@ public:
 	static bool GetNonogramName(const UObject* WorldContextObject, const int Index, FString& NonogramName);
 
 	static bool GetNonogram(const UObject* WorldContextObject, const int Index, FNonogram& Nonogram);
+
+	static bool GetCreatedNonogram(const UObject* WorldContextObject, const FString& NonogramName, FNonogram& Nonogram);
 
 	static UN3DGameInstance* GetN3DGameInstance(const UObject* WorldContextObject);
 };

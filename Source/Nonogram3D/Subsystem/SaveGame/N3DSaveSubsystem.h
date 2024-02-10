@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Nonogram3DTypes.h"
 #include "N3DSaveSubsystem.generated.h"
 
 class UN3DGameInstance;
@@ -27,6 +28,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
 	TObjectPtr<UN3DNonogramList> Nonograms;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
+	TMap<FString, FNonogram> MyCreatedNonograms;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Nonograms")
 	TObjectPtr<UN3DSaveGame> SaveGame;
 	
@@ -43,6 +47,7 @@ public:
 
 	// TODO move this somwhere else
 	UN3DNonogramList* GetNonograms() const { return Nonograms; }
+	TMap<FString, FNonogram> GetMyCreatedNonograms() const { return MyCreatedNonograms; }
 
 	void NonogramSolved(const int Index, const float SolvingTime);
 
@@ -78,4 +83,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	bool GetSavedEditorProgress(FIntVector& Size, TMap<int32, FColor>& EditorSolution) const;
+
+	/**
+	* Merges nonograms loaded from drive with already known ones
+	*/
+	void ResolveCreatedNonograms();
 };

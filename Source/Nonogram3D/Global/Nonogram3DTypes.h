@@ -20,14 +20,16 @@ enum class ESelectionType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EGameMode : uint8 {
+enum class EGameMode : uint8
+{
 	MainMenu,		// Game is in main menu. Game just started, nonogram was solved, or level editor saved new file
 	Solving,		// Player is solving a nonogram
 	Editor			// Player is creating new nonogram in nonogram editor
 };
 
 UENUM(BlueprintType)
-enum class ESaveLoadError : uint8 {
+enum class ESaveLoadError : uint8
+{
 	Success,
 	NotInEditMode,
 	EmptySolution,
@@ -36,6 +38,14 @@ enum class ESaveLoadError : uint8 {
 	InvalidPath,
 	FailedToSave,
 	UnsupportedPlatform
+};
+
+UENUM(BlueprintType)
+enum class ENonogramType : uint8
+{
+	Default,
+	Created,
+	Downloaded
 };
 
 USTRUCT(BlueprintType)
@@ -65,13 +75,45 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntVector Size = FIntVector(0);
 
+	// Deprecated, use Solution instead
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UDataTable> Nonogram = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<int32, FColor> Solution;
 
 	bool IsValid() const {
 		return !NonogramName.IsEmpty() && !Size.IsZero(); // TODO test also if Nonogram is valid (either loaded or pointing to valid object)
 	}
 };
+
+FORCEINLINE FArchive& operator<<(FArchive& Ar, FIntVector* Data)
+{
+	if (!Data)
+	{
+		return Ar;
+	}
+
+	Ar << Data->X;
+	Ar << Data->Y;
+	Ar << Data->Z;
+
+	return Ar;
+}
+
+FORCEINLINE FArchive& operator<<(FArchive& Ar, FNonogram* Data)
+{
+	if (!Data)
+	{
+		return Ar;
+	}
+
+	Ar << Data->NonogramName;
+	Ar << Data->Size;
+	Ar << Data->Nonogram;
+
+	return Ar;
+}
 
 USTRUCT(BlueprintType)
 struct FNonogramKey {

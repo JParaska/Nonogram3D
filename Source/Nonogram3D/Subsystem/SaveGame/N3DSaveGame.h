@@ -21,6 +21,9 @@ public:
 	TArray<FSaveNonogramStatus> Nonograms;
 
 	UPROPERTY(VisibleAnywhere)
+	TArray<FSavedCreatedNonogramsInfo> CreatedNonogramsInfo;
+
+	UPROPERTY(VisibleAnywhere)
 	TArray<FLinearColor> LastUsedEditorColors;
 
 	UPROPERTY(VisibleAnywhere)

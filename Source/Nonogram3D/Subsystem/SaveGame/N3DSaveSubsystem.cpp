@@ -5,6 +5,7 @@
 
 #include "N3DNonogramList.h"
 #include "N3DSaveGame.h"
+#include "N3DStatics.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -17,6 +18,7 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 		if (SaveGame = Cast<UN3DSaveGame>(LoadedGame))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Save game loaded"));
+			ResolveCreatedNonograms();
 			Callback.ExecuteIfBound(true);
 		}
 		else
@@ -35,6 +37,8 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 				SaveGame->Nonograms.Add(FSaveNonogramStatus());
 			}
 			SaveGame->Nonograms[0].Status = ENonogramStatus::Unlocked;
+
+			ResolveCreatedNonograms();
 
 			UGameplayStatics::AsyncSaveGameToSlot(SaveGame, SLOT_NAME, SLOT_INDEX, FAsyncSaveGameToSlotDelegate::CreateLambda([&, Callback](const FString& SlotName, const int32 Index, bool bSuccess) {
 				UE_LOG(LogTemp, Warning, TEXT("Save game created"));
@@ -194,4 +198,47 @@ bool UN3DSaveSubsystem::GetSavedEditorProgress(FIntVector& Size, TMap<int32, FCo
 	}
 
 	return false;
+}
+
+void UN3DSaveSubsystem::ResolveCreatedNonograms()
+{
+	if (!SaveGame)
+	{
+		return;
+	}
+
+	// Load already known nonogram info with empty solutions
+	if (!SaveGame->CreatedNonogramsInfo.IsEmpty())
+	{
+		MyCreatedNonograms.Reserve(SaveGame->CreatedNonogramsInfo.Num());
+		for (const FSavedCreatedNonogramsInfo& SavedCreatedNonogramInfo : SaveGame->CreatedNonogramsInfo)
+		{
+			MyCreatedNonograms.Add(SavedCreatedNonogramInfo.CreatedNonogramName, FNonogram());
+		}
+	}
+
+	// Read created nonogram solutions from drive
+	TArray<FNonogram> LoadedNonograms;
+	UN3DStatics::FindMyCreatedNonograms(this, LoadedNonograms);
+
+	MyCreatedNonograms.Reserve(MyCreatedNonograms.Num() + LoadedNonograms.Num());
+	for (const FNonogram& LoadedNonogram : LoadedNonograms)
+	{
+		if (!MyCreatedNonograms.Contains(LoadedNonogram.NonogramName))
+		{
+			// If this is a new nonogram, add it to lists
+			MyCreatedNonograms.Add(LoadedNonogram.NonogramName, LoadedNonogram);
+
+			FSavedCreatedNonogramsInfo SavedInfo;
+			SavedInfo.CreatedNonogramName = LoadedNonogram.NonogramName;
+			SaveGame->CreatedNonogramsInfo.Add(SavedInfo);
+		}
+		else
+		{
+			// Otherwise, fill solution
+			MyCreatedNonograms[LoadedNonogram.NonogramName] = LoadedNonogram;
+		}
+	}
+
+	// TODO deal with nonograms player manually deleted from drive and we no longer have solution for it
 }

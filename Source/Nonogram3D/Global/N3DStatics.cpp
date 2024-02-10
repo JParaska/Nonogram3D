@@ -6,11 +6,14 @@
 #include "N3DGameInstance.h"
 #include "N3DNonogramList.h"
 #include "N3DSaveSubsystem.h"
+#include "Nonogram3DTypes.h"
 
 #include "GeneralProjectSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/LocalTimestampDirectoryVisitor.h"
+#include "Serialization/BufferArchive.h"
 
-ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, const FString& NonogramName, const FIntVector& Size, const TMap<int32, FColor> Solution)
+ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, const FString& NonogramName, FIntVector Size, TMap<int32,FColor> Solution)
 {
 	UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject);
 	if (!Instance || Instance->GetMode() != EGameMode::Editor)
@@ -32,23 +35,6 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	{
 		return ESaveLoadError::InvalidSize;
 	}
-
-	TArray<FString> StringSolution;
-	StringSolution.Reserve(Solution.Num() + 2); // Solution size (1) + Data table header (1) + number of cubes in Solution
-	
-	StringSolution.Add(Size.ToString());
-
-	StringSolution.Add("---,CubeIndex,FinalColor");
-	int i = 0;
-	for (const TPair<int32, FColor>& Cube : Solution)
-	{
-		FString Line = FString::FromInt(i) + ",\"" + FString::FromInt(Cube.Key) + "\",\"" + Cube.Value.ToString() + "\"";
-
-		i++;
-		StringSolution.Add(Line);
-	}
-
-	// TODO save also size
 
 	FString Path;
 	const FString NonogramFileName = NonogramName + FString(".n3d");
@@ -72,14 +58,101 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 		return ESaveLoadError::InvalidPath;
 	}
 
+	FBufferArchive Archive;
+	Archive << Size;
+	Archive << Solution;
+
 	// TODO check if file doesn already exist
 
-	if (FFileHelper::SaveStringArrayToFile(StringSolution, *Path))
+	if (FFileHelper::SaveArrayToFile(Archive, *Path))
 	{
+		Archive.FlushCache();
+		Archive.Empty();
+
+		// Synch save game
+		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			SaveSubsystem->ResolveCreatedNonograms();
+		}
+
 		return ESaveLoadError::Success;
 	}
 
+	Archive.FlushCache();
+	Archive.Empty();
+
 	return ESaveLoadError::FailedToSave;
+}
+
+void UN3DStatics::FindMyCreatedNonograms(const UObject* WorldContextObject, TArray<FNonogram>& MyCreatedNonograms)
+{
+	FString Path;
+
+#if PLATFORM_WINDOWS
+	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), ProjectSettings->ProjectName, CREATED_NONOGRAMS);
+	}
+	else
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), DEFAULT_PROJECT_NAME, CREATED_NONOGRAMS);
+	}
+#else
+#error "Unsupported platform!"
+	//return ESaveLoadError::UnsupportedPlatform;
+#endif
+
+	IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	FLocalTimestampDirectoryVisitor Visitor(PlatformFile, {}, {}, false);
+	PlatformFile.IterateDirectory(*Path, Visitor);
+
+	TArray<uint8> BinaryArray;
+	for (TMap<FString, FDateTime>::TIterator TimestampIt(Visitor.FileTimes); TimestampIt; ++TimestampIt)
+	{
+		const FString FilePath = TimestampIt.Key();		
+		const FString FileName = FPaths::GetCleanFilename(FilePath);
+
+		// Load file
+		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath))
+		{
+			continue;
+		}
+
+		FMemoryReader FromBinary = FMemoryReader(BinaryArray, true); //true, free data after done
+		FromBinary.Seek(0);
+
+		// Extract size
+		FIntVector Size;
+		FromBinary << Size;
+
+		// Extract solution
+		TMap<int32, FColor> Solution;
+		FromBinary << Solution;
+
+		UE_LOG(LogTemp, Warning, TEXT("Loaded %s with size %s and %i cubes"), *FileName, *Size.ToString(), Solution.Num());
+
+		// Empty & Close Buffer 
+		BinaryArray.Reset();
+		FromBinary.FlushCache();
+		FromBinary.Close();
+
+		if (Size != FIntVector::ZeroValue && !Solution.IsEmpty())
+		{
+			FNonogram MyCreatedNonogram;
+			MyCreatedNonogram.NonogramName = FileName; // TODO remove suffix
+			MyCreatedNonogram.Size = Size;
+			MyCreatedNonogram.Solution = Solution;
+
+			MyCreatedNonograms.Add(MyCreatedNonogram);
+		}
+	}
+
+	if (!MyCreatedNonograms.IsEmpty())
+	{
+		MyCreatedNonograms.StableSort([](const FNonogram& Lhs, const FNonogram& Rhs) -> bool {
+			return Lhs.NonogramName < Rhs.NonogramName;
+		});
+	}
 }
 
 void UN3DStatics::AddNonogramEditorColor(const UObject* WorldContextObject, const FLinearColor& Color)
@@ -135,6 +208,23 @@ bool UN3DStatics::GetNonogram(const UObject* WorldContextObject, const int Index
 	}
 
 	Nonogram = FNonogram();
+	return false;
+}
+
+bool UN3DStatics::GetCreatedNonogram(const UObject* WorldContextObject, const FString& NonogramName, FNonogram& Nonogram)
+{
+	if (UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject))
+	{
+		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
+		{
+			if (SaveSubsystem->GetMyCreatedNonograms().Contains(NonogramName))
+			{
+				Nonogram = SaveSubsystem->GetMyCreatedNonograms()[NonogramName];
+				return true;
+			}
+		}
+	}
+
 	return false;
 }
 
