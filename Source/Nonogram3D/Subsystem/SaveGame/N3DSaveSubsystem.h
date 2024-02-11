@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Nonogram3DTypes.h"
+#include "N3DSaveGameTypes.h"
 #include "N3DSaveSubsystem.generated.h"
 
 class UN3DGameInstance;
@@ -31,10 +32,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
 	TMap<FString, FNonogram> MyCreatedNonograms;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
+	TMap<FString, FNonogram> DownloadedNonograms;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Nonograms")
 	TObjectPtr<UN3DSaveGame> SaveGame;
 	
 public:
+
+	UN3DSaveSubsystem();
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void LoadSavedData(const FOnSaveGameLoaded& Callback);
@@ -88,4 +94,8 @@ public:
 	* Merges nonograms loaded from drive with already known ones
 	*/
 	void ResolveCreatedNonograms();
+
+	void ResolveDownloadedNonograms();
+
+	void ResolveNonogramsFromDrive(const FString& Directory, TArray<FSavedCreatedNonogramsInfo>& SaveGameInfo, TMap<FString, FNonogram>& LoadedData);
 };

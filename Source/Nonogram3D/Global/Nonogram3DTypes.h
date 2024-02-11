@@ -11,6 +11,10 @@
 
 class UDataTable;
 
+#define DEFAULT_PROJECT_NAME "Nonogram3D"
+#define CREATED_NONOGRAMS "MyCreated"
+#define DOWNLOADED_NONOGRAMS "Downloaded"
+
 UENUM(BlueprintType)
 enum class ESelectionType : uint8
 {

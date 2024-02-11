@@ -7,10 +7,6 @@
 #include "Nonogram3DTypes.h"
 #include "N3DStatics.generated.h"
 
-#define DEFAULT_PROJECT_NAME "Nonogram3D"
-#define CREATED_NONOGRAMS "MyCreated"
-#define DOWNLOADED_NONOGRAMS "Downloaded"
-
 class AN3DNonogram;
 class UN3DGameInstance;
 
@@ -27,7 +23,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
 	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, FIntVector Size, TMap<int32,FColor> Solution);
 
-	static void FindMyCreatedNonograms(const UObject* WorldContextObject, TArray<FNonogram>& MyCreatedNonograms);
+	static void FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogram>& LoadedNonograms);
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
 	static void AddNonogramEditorColor(const UObject* WorldContextObject, const FLinearColor& Color);

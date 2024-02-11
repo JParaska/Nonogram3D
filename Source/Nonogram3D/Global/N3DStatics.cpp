@@ -84,22 +84,21 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	return ESaveLoadError::FailedToSave;
 }
 
-void UN3DStatics::FindMyCreatedNonograms(const UObject* WorldContextObject, TArray<FNonogram>& MyCreatedNonograms)
+void UN3DStatics::FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogram>& LoadedNonograms)
 {
 	FString Path;
 
 #if PLATFORM_WINDOWS
 	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
 	{
-		Path = FPaths::Combine(FPlatformProcess::UserDir(), ProjectSettings->ProjectName, CREATED_NONOGRAMS);
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), ProjectSettings->ProjectName, SubForlder);
 	}
 	else
 	{
-		Path = FPaths::Combine(FPlatformProcess::UserDir(), DEFAULT_PROJECT_NAME, CREATED_NONOGRAMS);
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), DEFAULT_PROJECT_NAME, SubForlder);
 	}
 #else
 #error "Unsupported platform!"
-	//return ESaveLoadError::UnsupportedPlatform;
 #endif
 
 	IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
@@ -138,18 +137,18 @@ void UN3DStatics::FindMyCreatedNonograms(const UObject* WorldContextObject, TArr
 
 		if (Size != FIntVector::ZeroValue && !Solution.IsEmpty())
 		{
-			FNonogram MyCreatedNonogram;
-			MyCreatedNonogram.NonogramName = FileName; // TODO remove suffix
-			MyCreatedNonogram.Size = Size;
-			MyCreatedNonogram.Solution = Solution;
+			FNonogram LoadedNonogram;
+			LoadedNonogram.NonogramName = FileName; // TODO remove suffix
+			LoadedNonogram.Size = Size;
+			LoadedNonogram.Solution = Solution;
 
-			MyCreatedNonograms.Add(MyCreatedNonogram);
+			LoadedNonograms.Add(LoadedNonogram);
 		}
 	}
 
-	if (!MyCreatedNonograms.IsEmpty())
+	if (!LoadedNonograms.IsEmpty())
 	{
-		MyCreatedNonograms.StableSort([](const FNonogram& Lhs, const FNonogram& Rhs) -> bool {
+		LoadedNonograms.StableSort([](const FNonogram& Lhs, const FNonogram& Rhs) -> bool {
 			return Lhs.NonogramName < Rhs.NonogramName;
 		});
 	}

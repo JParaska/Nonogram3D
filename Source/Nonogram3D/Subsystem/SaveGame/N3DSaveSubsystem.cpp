@@ -7,10 +7,42 @@
 #include "N3DSaveGame.h"
 #include "N3DStatics.h"
 
+#include "GeneralProjectSettings.h"
 #include "Kismet/GameplayStatics.h"
 
 #define SLOT_NAME "SaveGame"
 #define SLOT_INDEX 0
+
+UN3DSaveSubsystem::UN3DSaveSubsystem()
+{
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	FString Path;
+
+#if PLATFORM_WINDOWS
+	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), ProjectSettings->ProjectName);
+	}
+	else
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), DEFAULT_PROJECT_NAME);
+	}
+#else
+#error "Unsupported platform!"
+#endif
+
+	FString CreatedPath = FPaths::Combine(Path, CREATED_NONOGRAMS);
+	if (!PlatformFile.DirectoryExists(*CreatedPath))
+	{
+		PlatformFile.CreateDirectory(*CreatedPath);
+	}
+
+	FString DownloadedPath = FPaths::Combine(Path, DOWNLOADED_NONOGRAMS);
+	if (!PlatformFile.DirectoryExists(*DownloadedPath))
+	{
+		PlatformFile.CreateDirectory(*DownloadedPath);
+	}
+}
 
 void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 {
@@ -19,6 +51,7 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Save game loaded"));
 			ResolveCreatedNonograms();
+			ResolveDownloadedNonograms();
 			Callback.ExecuteIfBound(true);
 		}
 		else
@@ -39,6 +72,7 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 			SaveGame->Nonograms[0].Status = ENonogramStatus::Unlocked;
 
 			ResolveCreatedNonograms();
+			ResolveDownloadedNonograms();
 
 			UGameplayStatics::AsyncSaveGameToSlot(SaveGame, SLOT_NAME, SLOT_INDEX, FAsyncSaveGameToSlotDelegate::CreateLambda([&, Callback](const FString& SlotName, const int32 Index, bool bSuccess) {
 				UE_LOG(LogTemp, Warning, TEXT("Save game created"));
@@ -207,38 +241,71 @@ void UN3DSaveSubsystem::ResolveCreatedNonograms()
 		return;
 	}
 
-	// Load already known nonogram info with empty solutions
-	if (!SaveGame->CreatedNonogramsInfo.IsEmpty())
+	ResolveNonogramsFromDrive(CREATED_NONOGRAMS, SaveGame->CreatedNonogramsInfo, MyCreatedNonograms);
+}
+
+void UN3DSaveSubsystem::ResolveDownloadedNonograms()
+{
+	if (!SaveGame)
 	{
-		MyCreatedNonograms.Reserve(SaveGame->CreatedNonogramsInfo.Num());
-		for (const FSavedCreatedNonogramsInfo& SavedCreatedNonogramInfo : SaveGame->CreatedNonogramsInfo)
+		return;
+	}
+
+	ResolveNonogramsFromDrive(DOWNLOADED_NONOGRAMS, SaveGame->DownloadedNonogramsInfo, DownloadedNonograms);
+}
+
+void UN3DSaveSubsystem::ResolveNonogramsFromDrive(const FString& Directory, TArray<FSavedCreatedNonogramsInfo>& SaveGameInfo, TMap<FString, FNonogram>& LoadedData)
+{
+	// Load already known nonogram info with empty solutions
+	if (!SaveGameInfo.IsEmpty())
+	{
+		LoadedData.Reserve(SaveGameInfo.Num());
+		for (const FSavedCreatedNonogramsInfo& SavedNonogramInfo : SaveGameInfo)
 		{
-			MyCreatedNonograms.Add(SavedCreatedNonogramInfo.CreatedNonogramName, FNonogram());
+			LoadedData.Add(SavedNonogramInfo.CreatedNonogramName, FNonogram());
 		}
 	}
 
-	// Read created nonogram solutions from drive
+	// Read nonogram solutions from drive
 	TArray<FNonogram> LoadedNonograms;
-	UN3DStatics::FindMyCreatedNonograms(this, LoadedNonograms);
+	UN3DStatics::FindNonogramsOnDrive(Directory, LoadedNonograms);
 
-	MyCreatedNonograms.Reserve(MyCreatedNonograms.Num() + LoadedNonograms.Num());
+	LoadedData.Reserve(LoadedData.Num() + LoadedNonograms.Num());
 	for (const FNonogram& LoadedNonogram : LoadedNonograms)
 	{
-		if (!MyCreatedNonograms.Contains(LoadedNonogram.NonogramName))
+		if (!LoadedData.Contains(LoadedNonogram.NonogramName))
 		{
 			// If this is a new nonogram, add it to lists
-			MyCreatedNonograms.Add(LoadedNonogram.NonogramName, LoadedNonogram);
+			LoadedData.Add(LoadedNonogram.NonogramName, LoadedNonogram);
 
 			FSavedCreatedNonogramsInfo SavedInfo;
 			SavedInfo.CreatedNonogramName = LoadedNonogram.NonogramName;
-			SaveGame->CreatedNonogramsInfo.Add(SavedInfo);
+			SaveGameInfo.Add(SavedInfo);
 		}
 		else
 		{
 			// Otherwise, fill solution
-			MyCreatedNonograms[LoadedNonogram.NonogramName] = LoadedNonogram;
+			LoadedData[LoadedNonogram.NonogramName] = LoadedNonogram;
 		}
 	}
 
-	// TODO deal with nonograms player manually deleted from drive and we no longer have solution for it
+	// TODO adjust index of solution in progress if solving created or downloaded nonogram
+
+	// Remove nonograms manually removed by player from drive
+	if (!SaveGameInfo.IsEmpty())
+	{
+		for (int i = SaveGameInfo.Num() - 1; i >= 0; i--)
+		{
+			const FString RemovedNonogramName = SaveGameInfo[i].CreatedNonogramName;
+			if (!LoadedData.Contains(RemovedNonogramName))
+			{
+				SaveGameInfo.RemoveAt(i);
+			}
+			else if (!LoadedData[RemovedNonogramName].IsValid())
+			{
+				SaveGameInfo.RemoveAt(i);
+				LoadedData.Remove(RemovedNonogramName);
+			}
+		}
+	}
 }
