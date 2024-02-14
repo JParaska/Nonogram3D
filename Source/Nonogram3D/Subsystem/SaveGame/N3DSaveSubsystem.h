@@ -55,7 +55,10 @@ public:
 	UN3DNonogramList* GetNonograms() const { return Nonograms; }
 	TMap<FString, FNonogram> GetMyCreatedNonograms() const { return MyCreatedNonograms; }
 
-	void NonogramSolved(const int Index, const float SolvingTime);
+	bool IsValidIndex(const int SolutionIndex, const ENonogramType SolutionType) const;
+	bool GetNonogram(const int Index, const ENonogramType Type, FNonogram& Nonogram) const;
+
+	void NonogramSolved(const int Index, const ENonogramType Type, const float SolvingTime);
 
 	TArray<FLinearColor> GetEditorColors() const;
 	void AddEditorColor(const FLinearColor& Color);
@@ -64,7 +67,7 @@ public:
 	* Stores current solving progress in save file.
 	* This DOESN'T save data on disk.
 	*/
-	void StoreSolvingProgress(const int Index, const TSet<int32>& SelectedCubes);
+	void StoreSolvingProgress(const int Index, const ENonogramType Type, const TSet<int32>& SelectedCubes);
 
 	/**
 	* Discards current editor progress from save file.

@@ -24,13 +24,14 @@ void UN3DGameInstance::SetMode(const EGameMode NewMode)
 	OnModeChanged.Broadcast(Mode, PreviousMode);
 }
 
-void UN3DGameInstance::StartSolving(const int SolutionIndex)
+void UN3DGameInstance::StartSolving(const int SolutionIndex, const ENonogramType SolutionType)
 {
 	if (UN3DSaveSubsystem* SaveSubsystem = GetSubsystem<UN3DSaveSubsystem>())
 	{
-		if (SaveSubsystem->GetNonograms()->Nonograms.IsValidIndex(SolutionIndex))
+		if (SaveSubsystem->IsValidIndex(SolutionIndex, SolutionType))
 		{
 			SelectedSolution = SolutionIndex;
+			SelectedSolutionType = SolutionType;
 			SetMode(EGameMode::Solving);
 		}
 	}

@@ -179,10 +179,10 @@ void UN3DStatics::GetNonogrameditorColors(const UObject* WorldContextObject, TAr
 	EditorColors = TArray<FLinearColor>();
 }
 
-bool UN3DStatics::GetNonogramName(const UObject* WorldContextObject, const int Index, FString& NonogramName)
+bool UN3DStatics::GetNonogramName(const UObject* WorldContextObject, const int Index, const ENonogramType Type, FString& NonogramName)
 {
 	FNonogram Nonogram;
-	if (GetNonogram(WorldContextObject, Index, Nonogram))
+	if (GetNonogram(WorldContextObject, Index, Type, Nonogram))
 	{
 		NonogramName = Nonogram.NonogramName;
 		return true;
@@ -192,17 +192,13 @@ bool UN3DStatics::GetNonogramName(const UObject* WorldContextObject, const int I
 	return false;
 }
 
-bool UN3DStatics::GetNonogram(const UObject* WorldContextObject, const int Index, FNonogram& Nonogram)
+bool UN3DStatics::GetNonogram(const UObject* WorldContextObject, const int Index, const ENonogramType Type, FNonogram& Nonogram)
 {
 	if (UN3DGameInstance* Instance = GetN3DGameInstance(WorldContextObject))
 	{
 		if (UN3DSaveSubsystem* SaveSubsystem = Instance->GetSubsystem<UN3DSaveSubsystem>())
 		{
-			if (SaveSubsystem->GetNonograms()->Nonograms.IsValidIndex(Index))
-			{
-				Nonogram = SaveSubsystem->GetNonograms()->Nonograms[Index];
-				return true;
-			}
+			return SaveSubsystem->GetNonogram(Index, Type, Nonogram);
 		}
 	}
 

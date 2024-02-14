@@ -26,6 +26,9 @@ protected:
 
 	UPROPERTY()
 	int SelectedSolution = 0;
+
+	UPROPERTY()
+	ENonogramType SelectedSolutionType = ENonogramType::Default;
 #pragma endregion
 
 #pragma region Methods
@@ -35,12 +38,13 @@ public:
 	EGameMode GetMode() const { return Mode; }
 
 	int GetSelectedSolution() const { return SelectedSolution; }
+	ENonogramType GetSelectedType() const { return SelectedSolutionType; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetMode(const EGameMode NewMode);
 
 	UFUNCTION(BlueprintCallable)
-	void StartSolving(const int SolutionIndex);
+	void StartSolving(const int SolutionIndex, const ENonogramType SolutionType);
 
 	/**
 	* Solves current nonogram. Applies only in solving mode

@@ -7,6 +7,8 @@
 // This header is for enums and structs used by classes and blueprints accross the game
 // ----------------------------------------------------------------------------------------------------------------
 
+#include "Nonogram3DTypes.h"
+
 #include "N3DSaveGameTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -56,6 +58,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int Index = -1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	ENonogramType Type;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TSet<int32> SelectedCubes;

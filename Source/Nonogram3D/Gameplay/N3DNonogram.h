@@ -91,6 +91,7 @@ protected:
 	TMap<int32, FColor> CurrentSolution;
 
 	int CurrentNonogramIndex;
+	ENonogramType CurrentNonogramType;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Nonogram")
 	TSet<int32> SelectedCubes;

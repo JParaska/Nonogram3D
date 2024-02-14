@@ -32,9 +32,9 @@ public:
 	static void GetNonogrameditorColors(const UObject* WorldContextObject, TArray<FLinearColor>& EditorColors);
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Utils", meta=(WorldContext="WorldContextObject"))
-	static bool GetNonogramName(const UObject* WorldContextObject, const int Index, FString& NonogramName);
+	static bool GetNonogramName(const UObject* WorldContextObject, const int Index, const ENonogramType Type, FString& NonogramName);
 
-	static bool GetNonogram(const UObject* WorldContextObject, const int Index, FNonogram& Nonogram);
+	static bool GetNonogram(const UObject* WorldContextObject, const int Index, const ENonogramType Type, FNonogram& Nonogram);
 
 	static bool GetCreatedNonogram(const UObject* WorldContextObject, const FString& NonogramName, FNonogram& Nonogram);
 

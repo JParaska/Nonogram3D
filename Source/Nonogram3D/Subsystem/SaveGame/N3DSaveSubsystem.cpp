@@ -111,33 +111,76 @@ FSaveNonogramStatus UN3DSaveSubsystem::GetNonogramStatus(const int Index) const
 	return SaveGame->Nonograms[Index];
 }
 
-void UN3DSaveSubsystem::NonogramSolved(const int Index, const float CompletitionTime)
+bool UN3DSaveSubsystem::IsValidIndex(const int SolutionIndex, const ENonogramType SolutionType) const
 {
-	if (!SaveGame || !SaveGame->Nonograms.IsValidIndex(Index))
+	switch (SolutionType)
+	{
+	case ENonogramType::Default:
+		return Nonograms->Nonograms.IsValidIndex(SolutionIndex);
+	case ENonogramType::Created:
+		return SaveGame && SaveGame->CreatedNonogramsInfo.IsValidIndex(SolutionIndex) && MyCreatedNonograms.Contains(SaveGame->CreatedNonogramsInfo[SolutionIndex].CreatedNonogramName);
+	case ENonogramType::Downloaded:
+		return SaveGame && SaveGame->DownloadedNonogramsInfo.IsValidIndex(SolutionIndex) && DownloadedNonograms.Contains(SaveGame->DownloadedNonogramsInfo[SolutionIndex].CreatedNonogramName);
+	default:
+		return false;
+	}
+}
+
+bool UN3DSaveSubsystem::GetNonogram(const int Index, const ENonogramType Type, FNonogram& Nonogram) const
+{
+	if (!IsValidIndex(Index, Type))
+	{
+		return false;
+	}
+
+	switch (Type)
+	{
+	case ENonogramType::Default:
+		Nonogram = Nonograms->Nonograms[Index];
+		break;
+	case ENonogramType::Created:
+		Nonogram = MyCreatedNonograms[SaveGame->CreatedNonogramsInfo[Index].CreatedNonogramName];
+		break;
+	case ENonogramType::Downloaded:
+		Nonogram = DownloadedNonograms[SaveGame->DownloadedNonogramsInfo[Index].CreatedNonogramName];
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+void UN3DSaveSubsystem::NonogramSolved(const int Index, const ENonogramType Type, const float CompletitionTime)
+{
+	if (!SaveGame || !IsValidIndex(Index, Type))
 	{
 		return;
 	}
 
-	FSaveNonogramStatus& SolvedNonogramState = SaveGame->Nonograms[Index];
-	SolvedNonogramState.Status = ENonogramStatus::Completed;
-	
-	// If new completition time is faster, update it
-	if (SolvedNonogramState.CompletitionTime > CompletitionTime)
+	// If solving one of default nonograms, mark it as solved and unlock next one
+	if (Type == ENonogramType::Default)
 	{
-		SolvedNonogramState.CompletitionTime = CompletitionTime;
-	}
-	
-	// If next nonogram is locked, unlock it
-	if (SaveGame->Nonograms.IsValidIndex(Index + 1))
-	{
-		if (SaveGame->Nonograms[Index + 1].Status == ENonogramStatus::Locked)
+		FSaveNonogramStatus& SolvedNonogramState = SaveGame->Nonograms[Index];
+		SolvedNonogramState.Status = ENonogramStatus::Completed;
+
+		// If new completition time is faster, update it
+		if (SolvedNonogramState.CompletitionTime > CompletitionTime)
 		{
-			SaveGame->Nonograms[Index + 1].Status = ENonogramStatus::Unlocked;
+			SolvedNonogramState.CompletitionTime = CompletitionTime;
+		}
+
+		// If next nonogram is locked, unlock it
+		if (SaveGame->Nonograms.IsValidIndex(Index + 1))
+		{
+			if (SaveGame->Nonograms[Index + 1].Status == ENonogramStatus::Locked)
+			{
+				SaveGame->Nonograms[Index + 1].Status = ENonogramStatus::Unlocked;
+			}
 		}
 	}
 
 	// If finished nonogram had saved progress, reset progress
-	if (SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index)
+	if (SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index && SaveGame->SolvingProgress.Type == Type)
 	{
 		SaveGame->SolvingProgress.Reset();
 	}
@@ -156,14 +199,17 @@ void UN3DSaveSubsystem::AddEditorColor(const FLinearColor& Color)
 	}
 }
 
-void UN3DSaveSubsystem::StoreSolvingProgress(const int Index, const TSet<int32>& SelectedCubes)
+void UN3DSaveSubsystem::StoreSolvingProgress(const int Index, const ENonogramType Type, const TSet<int32>& SelectedCubes)
 {
-	if (SaveGame && SaveGame->Nonograms.IsValidIndex(Index))
+	if (SaveGame && IsValidIndex(Index, Type))
 	{
 		SaveGame->SolvingProgress.Index = Index;
+		SaveGame->SolvingProgress.Type = Type;
+
+		SaveGame->SolvingProgress.SelectedCubes.Reset();
 		SaveGame->SolvingProgress.SelectedCubes.Append(SelectedCubes);
 
-		if (SaveGame->Nonograms[Index].Status == ENonogramStatus::Unlocked)
+		if (Type == ENonogramType::Default && SaveGame->Nonograms[Index].Status == ENonogramStatus::Unlocked)
 		{
 			SaveGame->Nonograms[Index].Status = ENonogramStatus::InProgress;
 		}

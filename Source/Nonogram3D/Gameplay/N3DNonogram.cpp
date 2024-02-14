@@ -221,7 +221,7 @@ void AN3DNonogram::StoreSolvingProgress() const
 	{
 		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
 		{
-			SaveGameSubsystem->StoreSolvingProgress(CurrentNonogramIndex, SelectedCubes);
+			SaveGameSubsystem->StoreSolvingProgress(CurrentNonogramIndex, CurrentNonogramType, SelectedCubes);
 		}
 	}
 }
@@ -394,8 +394,10 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 		if (UN3DGameInstance* GameInstance = Cast<UN3DGameInstance>(UGameplayStatics::GetGameInstance(this)))
 		{
 			CurrentNonogramIndex = GameInstance->GetSelectedSolution();
+			CurrentNonogramType = GameInstance->GetSelectedType();
 			FNonogram Nonogram;
-			if (UN3DStatics::GetNonogram(this, CurrentNonogramIndex, Nonogram))
+
+			if (UN3DStatics::GetNonogram(this, CurrentNonogramIndex, CurrentNonogramType, Nonogram))
 			{
 				SetSolution(Nonogram.Nonogram.LoadSynchronous());
 
@@ -756,7 +758,7 @@ void AN3DNonogram::FinishSolving() {
 			float CompletitionTime;
 			if (GetNonogramSolvingElapsedTime(CompletitionTime))
 			{
-				SaveGameSubsystem->NonogramSolved(CurrentNonogramIndex, CompletitionTime);
+				SaveGameSubsystem->NonogramSolved(CurrentNonogramIndex, CurrentNonogramType, CompletitionTime);
 			}
 		}
 	}
