@@ -69,12 +69,22 @@ public:
 	*/
 	void StoreSolvingProgress(const int Index, const ENonogramType Type, const TSet<int32>& SelectedCubes);
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	void DiscardSolvingProgress();
+
 	/**
 	* Discards current editor progress from save file.
 	* This DOESN'T save data on disk.
 	*/
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void DiscardEditorProgress();
+
+	/**
+	* Removes created or dowloaded nonogram from the list.
+	* This DOESN'T save data on disk
+	*/
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	bool DeleteNonogram(const int Index, const ENonogramType Type);
 
 	/**
 	* Stores current editor progress in save file.
@@ -104,4 +114,6 @@ public:
 	void ResolveDownloadedNonograms();
 
 	void ResolveNonogramsFromDrive(const FString& Directory, TArray<FSavedCreatedNonogramsInfo>& SaveGameInfo, TMap<FString, FNonogram>& LoadedData);
+
+	void ResolveNonogramSolvingProgressForDeletedNonogram(const int Index, const ENonogramType Type);
 };

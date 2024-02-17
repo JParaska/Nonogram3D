@@ -44,6 +44,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FString CreatedNonogramName;
+
+	// TODO save also size, and check it against loaded data
 };
 
 USTRUCT(BlueprintType)

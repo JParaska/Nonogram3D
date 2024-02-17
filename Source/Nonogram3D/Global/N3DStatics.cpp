@@ -53,7 +53,7 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	return ESaveLoadError::UnsupportedPlatform;
 #endif
 
-	if (Path.IsEmpty())
+	if (Path.IsEmpty() || !FPaths::ValidatePath(Path))
 	{
 		return ESaveLoadError::InvalidPath;
 	}
@@ -82,6 +82,31 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	Archive.Empty();
 
 	return ESaveLoadError::FailedToSave;
+}
+
+void UN3DStatics::DeleteNonogram(const FString& NonogramName, const FString& SubForlder)
+{
+	FString Path;
+
+#if PLATFORM_WINDOWS
+	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), ProjectSettings->ProjectName, SubForlder, NonogramName);
+	}
+	else
+	{
+		Path = FPaths::Combine(FPlatformProcess::UserDir(), DEFAULT_PROJECT_NAME, SubForlder, NonogramName);
+	}
+#else
+#error "Unsupported platform!"
+#endif
+
+	//Make sure the path is valid both in characters and in that the file path actually exists
+	if (!Path.IsEmpty() && FPaths::ValidatePath(Path) && FPaths::FileExists(Path))
+	{
+		IFileManager& FileManager = IFileManager::Get();
+		FileManager.Delete(*Path);
+	}
 }
 
 void UN3DStatics::FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogram>& LoadedNonograms)

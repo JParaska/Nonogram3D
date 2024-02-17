@@ -23,6 +23,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))
 	static ESaveLoadError SaveNonogram(const UObject* WorldContextObject, const FString& Nonogramname, FIntVector Size, TMap<int32,FColor> Solution);
 
+	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor")
+	static void DeleteNonogram(const FString& NonogramName, const FString& SubForlder);
+
 	static void FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogram>& LoadedNonograms);
 
 	UFUNCTION(BlueprintCallable, Category = "Nonogram Editor", meta=(WorldContext="WorldContextObject"))

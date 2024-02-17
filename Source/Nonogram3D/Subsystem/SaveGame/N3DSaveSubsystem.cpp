@@ -52,7 +52,12 @@ void UN3DSaveSubsystem::LoadSavedData(const FOnSaveGameLoaded& Callback)
 			UE_LOG(LogTemp, Warning, TEXT("Save game loaded"));
 			ResolveCreatedNonograms();
 			ResolveDownloadedNonograms();
-			Callback.ExecuteIfBound(true);
+
+			// Re-save data as created/downloaded nonograms can alter it
+			UGameplayStatics::AsyncSaveGameToSlot(SaveGame, SLOT_NAME, SLOT_INDEX, FAsyncSaveGameToSlotDelegate::CreateLambda([&, Callback](const FString& SlotName, const int32 Index, bool bSuccess) {
+				UE_LOG(LogTemp, Warning, TEXT("Save game re-saved after loading created/downloaded nonograms"));
+				Callback.ExecuteIfBound(bSuccess);
+			}));
 		}
 		else
 		{
@@ -216,12 +221,65 @@ void UN3DSaveSubsystem::StoreSolvingProgress(const int Index, const ENonogramTyp
 	}
 }
 
+void UN3DSaveSubsystem::DiscardSolvingProgress()
+{
+	if (SaveGame && SaveGame->SolvingProgress.IsSet())
+	{
+		SaveGame->SolvingProgress.Reset();
+	}
+}
+
 void UN3DSaveSubsystem::DiscardEditorProgress()
 {
 	if (SaveGame)
 	{
 		SaveGame->EditorProgress.Reset();
 	}
+}
+
+bool UN3DSaveSubsystem::DeleteNonogram(const int Index, const ENonogramType Type)
+{
+	if (!SaveGame)
+	{
+		return false;
+	}
+
+	if (Type != ENonogramType::Created && Type != ENonogramType::Downloaded)
+	{
+		return false;
+	}
+
+	bool bDeleted = false;
+
+	switch (Type)
+	{
+	case ENonogramType::Created:
+		if (SaveGame->CreatedNonogramsInfo.IsValidIndex(Index))
+		{
+			FString Name = SaveGame->CreatedNonogramsInfo[Index].CreatedNonogramName;
+			SaveGame->CreatedNonogramsInfo.RemoveAt(Index);
+			MyCreatedNonograms.Remove(Name);
+			UN3DStatics::DeleteNonogram(Name, CREATED_NONOGRAMS);
+			ResolveNonogramSolvingProgressForDeletedNonogram(Index, Type);
+			bDeleted = true;
+		}
+		break;
+	case ENonogramType::Downloaded:
+		if (SaveGame->DownloadedNonogramsInfo.IsValidIndex(Index))
+		{
+			FString Name = SaveGame->DownloadedNonogramsInfo[Index].CreatedNonogramName;
+			SaveGame->DownloadedNonogramsInfo.RemoveAt(Index);
+			DownloadedNonograms.Remove(Name);
+			UN3DStatics::DeleteNonogram(Name, DOWNLOADED_NONOGRAMS);
+			ResolveNonogramSolvingProgressForDeletedNonogram(Index, Type);
+			bDeleted = true;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return bDeleted;
 }
 
 void UN3DSaveSubsystem::StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution)
@@ -312,6 +370,25 @@ void UN3DSaveSubsystem::ResolveDownloadedNonograms()
 
 void UN3DSaveSubsystem::ResolveNonogramsFromDrive(const FString& Directory, TArray<FSavedCreatedNonogramsInfo>& SaveGameInfo, TMap<FString, FNonogram>& LoadedData)
 {
+	if (!SaveGame)
+	{
+		return;
+	}
+
+	ENonogramType LoadedType;
+	if (Directory == CREATED_NONOGRAMS)
+	{
+		LoadedType = ENonogramType::Created;
+	}
+	else if (Directory == DOWNLOADED_NONOGRAMS)
+	{
+		LoadedType = ENonogramType::Downloaded;
+	}
+	else
+	{
+		return;
+	}
+
 	// Load already known nonogram info with empty solutions
 	if (!SaveGameInfo.IsEmpty())
 	{
@@ -345,8 +422,6 @@ void UN3DSaveSubsystem::ResolveNonogramsFromDrive(const FString& Directory, TArr
 		}
 	}
 
-	// TODO adjust index of solution in progress if solving created or downloaded nonogram
-
 	// Remove nonograms manually removed by player from drive
 	if (!SaveGameInfo.IsEmpty())
 	{
@@ -355,13 +430,34 @@ void UN3DSaveSubsystem::ResolveNonogramsFromDrive(const FString& Directory, TArr
 			const FString RemovedNonogramName = SaveGameInfo[i].CreatedNonogramName;
 			if (!LoadedData.Contains(RemovedNonogramName))
 			{
+				ResolveNonogramSolvingProgressForDeletedNonogram(i, LoadedType);
+
 				SaveGameInfo.RemoveAt(i);
 			}
 			else if (!LoadedData[RemovedNonogramName].IsValid())
 			{
+				ResolveNonogramSolvingProgressForDeletedNonogram(i, LoadedType);
+
 				SaveGameInfo.RemoveAt(i);
 				LoadedData.Remove(RemovedNonogramName);
 			}
+		}
+	}
+}
+
+void UN3DSaveSubsystem::ResolveNonogramSolvingProgressForDeletedNonogram(const int Index, const ENonogramType Type)
+{
+	if (SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Type == Type)
+	{
+		// If deleted nonogram was in progress, remove progress from save game
+		if (SaveGame->SolvingProgress.Index == Index)
+		{
+			SaveGame->SolvingProgress.Reset();
+		}
+		// If nonogram in progress had highier index, then deleted nonogram, decrease index, to keep it synched
+		else if (SaveGame->SolvingProgress.Index > Index)
+		{
+			SaveGame->SolvingProgress.Index--;
 		}
 	}
 }
