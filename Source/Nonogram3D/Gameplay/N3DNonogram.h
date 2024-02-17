@@ -213,7 +213,8 @@ protected:
 
 	void SelectPlane(const ESelectionType Selection, const int Index);
 
-	void SetSolution(UDataTable* SolutionDataTable);
+	void SetSolution_DEPRECATED(const UDataTable* SolutionDataTable);
+	void SetSolution(const TMap<int, FColor>& NewSolutioin);
 
 	void DefaultMaterialOnAllCubes();
 

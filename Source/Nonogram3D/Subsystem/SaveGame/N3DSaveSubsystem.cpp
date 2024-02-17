@@ -238,19 +238,29 @@ void UN3DSaveSubsystem::StoreEditorProgress(const FIntVector& Size, const TMap<i
 	}
 }
 
-bool UN3DSaveSubsystem::IsAnyNonogramInProgress(int& Index) const
+bool UN3DSaveSubsystem::IsNonogramInProgress(const int Index, const ENonogramType Type) const
+{
+	if (SaveGame && SaveGame->SolvingProgress.IsSet())
+	{
+		return SaveGame->SolvingProgress.Index == Index && SaveGame->SolvingProgress.Type == Type;
+	}
+	return false;
+}
+
+bool UN3DSaveSubsystem::IsAnyNonogramInProgress(int& Index, ENonogramType& Type) const
 {
 	if (SaveGame && SaveGame->SolvingProgress.IsSet())
 	{
 		Index = SaveGame->SolvingProgress.Index;
+		Type = SaveGame->SolvingProgress.Type;
 		return true;
 	}
 	return false;
 }
 
-bool UN3DSaveSubsystem::GetSavedSolvingProgress(const int Index, TSet<int32>& SelectedCubes) const
+bool UN3DSaveSubsystem::GetSavedSolvingProgress(TSet<int32>& SelectedCubes) const
 {
-	if (SaveGame && SaveGame->SolvingProgress.IsSet() && SaveGame->SolvingProgress.Index == Index)
+	if (SaveGame && SaveGame->SolvingProgress.IsSet())
 	{
 		SelectedCubes.Reset();
 		SelectedCubes.Append(SaveGame->SolvingProgress.SelectedCubes);

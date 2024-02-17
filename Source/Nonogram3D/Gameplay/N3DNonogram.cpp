@@ -399,7 +399,21 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 
 			if (UN3DStatics::GetNonogram(this, CurrentNonogramIndex, CurrentNonogramType, Nonogram))
 			{
-				SetSolution(Nonogram.Nonogram.LoadSynchronous());
+				const UDataTable* DataTableSolution = Nonogram.Nonogram.LoadSynchronous();
+				if (DataTableSolution)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Solution %s uses deprecated format."), *Nonogram.NonogramName);
+					SetSolution_DEPRECATED(DataTableSolution);
+				}
+				else if (!Nonogram.Solution.IsEmpty())
+				{
+					SetSolution(Nonogram.Solution);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("Nonogram %s has no solution assigned"), *Nonogram.NonogramName);
+					GameInstance->SetMode(EGameMode::MainMenu);
+				}
 
 				CurrentSize = Nonogram.Size;
 				GenerateNonogramKey();
@@ -414,7 +428,10 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 				// Load progress if any is saved
 				if (UN3DSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UN3DSaveSubsystem>())
 				{
-					SaveSubsystem->GetSavedSolvingProgress(CurrentNonogramIndex, SelectedCubes);
+					if (SaveSubsystem->IsNonogramInProgress(CurrentNonogramIndex, CurrentNonogramType))
+					{
+						SaveSubsystem->GetSavedSolvingProgress(SelectedCubes);
+					}
 				}
 
 				CurrentSelection = { ESelectionType::X, 0 };
@@ -569,7 +586,7 @@ void AN3DNonogram::SelectPlane(const ESelectionType Selection, const int Index)
 	OnSelectionChanged.Broadcast(Selection, Index);
 }
 
-void AN3DNonogram::SetSolution(UDataTable* SolutionDataTable)
+void AN3DNonogram::SetSolution_DEPRECATED(const UDataTable* SolutionDataTable)
 {
 	if (!ensure(SolutionDataTable))
 	{
@@ -585,6 +602,12 @@ void AN3DNonogram::SetSolution(UDataTable* SolutionDataTable)
 	{
 		CurrentSolution.Add(SolutionRow->CubeIndex, SolutionRow->FinalColor);
 	}
+}
+
+void AN3DNonogram::SetSolution(const TMap<int, FColor>& NewSolutioin)
+{
+	CurrentSolution.Reset();
+	CurrentSolution.Append(NewSolutioin);
 }
 
 void AN3DNonogram::DefaultMaterialOnAllCubes()

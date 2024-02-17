@@ -25,7 +25,7 @@ class NONOGRAM3D_API UN3DSaveSubsystem : public UGameInstanceSubsystem
 
 protected:
 
-	// TODO move this somwhere else
+	// TODO having save subsystem responsible for both saving/loading and managing available solutions isn't best, rework
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
 	TObjectPtr<UN3DNonogramList> Nonograms;
 
@@ -83,9 +83,12 @@ public:
 	void StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution);
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool IsAnyNonogramInProgress(int& Index) const;
+	bool IsNonogramInProgress(const int Index, const ENonogramType Type) const;
 
-	bool GetSavedSolvingProgress(const int Index, TSet<int32>& SelectedCubes) const;
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	bool IsAnyNonogramInProgress(int& Index, ENonogramType& Type) const;
+
+	bool GetSavedSolvingProgress(TSet<int32>& SelectedCubes) const;
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	bool IsEditorInProgress() const;

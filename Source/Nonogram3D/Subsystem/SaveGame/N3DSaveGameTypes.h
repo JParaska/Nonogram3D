@@ -16,7 +16,7 @@ enum class ENonogramStatus : uint8
 {
 	Locked,
 	Unlocked,
-	InProgress,
+	InProgress, // TODO I don't think I still need this
 	Completed
 };
 
