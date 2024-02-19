@@ -15,6 +15,8 @@ class UDataTable;
 #define CREATED_NONOGRAMS "MyCreated"
 #define DOWNLOADED_NONOGRAMS "Downloaded"
 
+#define NONOGRAM_FILE_EXTENSION ".n3d"
+
 UENUM(BlueprintType)
 enum class ESelectionType : uint8
 {

@@ -148,6 +148,7 @@ bool UN3DSaveSubsystem::GetNonogram(const int Index, const ENonogramType Type, F
 		break;
 	case ENonogramType::Downloaded:
 		Nonogram = DownloadedNonograms[SaveGame->DownloadedNonogramsInfo[Index].CreatedNonogramName];
+		break;
 	default:
 		return false;
 	}

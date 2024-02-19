@@ -37,7 +37,7 @@ ESaveLoadError UN3DStatics::SaveNonogram(const UObject* WorldContextObject, cons
 	}
 
 	FString Path;
-	const FString NonogramFileName = NonogramName + FString(".n3d");
+	const FString NonogramFileName = NonogramName + NONOGRAM_FILE_EXTENSION;
 
 #if PLATFORM_WINDOWS
 	if (const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>())
@@ -134,12 +134,21 @@ void UN3DStatics::FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogr
 	for (TMap<FString, FDateTime>::TIterator TimestampIt(Visitor.FileTimes); TimestampIt; ++TimestampIt)
 	{
 		const FString FilePath = TimestampIt.Key();		
-		const FString FileName = FPaths::GetCleanFilename(FilePath);
 
 		// Load file
 		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath))
 		{
 			continue;
+		}
+
+		FString FileName = FPaths::GetCleanFilename(FilePath);
+		if (!FileName.EndsWith(NONOGRAM_FILE_EXTENSION))
+		{
+			continue;
+		}
+		else
+		{
+			FileName = FileName.LeftChop(FString(NONOGRAM_FILE_EXTENSION).Len());
 		}
 
 		FMemoryReader FromBinary = FMemoryReader(BinaryArray, true); //true, free data after done
@@ -163,7 +172,7 @@ void UN3DStatics::FindNonogramsOnDrive(const FString& SubForlder, TArray<FNonogr
 		if (Size != FIntVector::ZeroValue && !Solution.IsEmpty())
 		{
 			FNonogram LoadedNonogram;
-			LoadedNonogram.NonogramName = FileName; // TODO remove suffix
+			LoadedNonogram.NonogramName = FileName;
 			LoadedNonogram.Size = Size;
 			LoadedNonogram.Solution = Solution;
 
