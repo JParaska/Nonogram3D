@@ -148,7 +148,7 @@ void AN3DNonogram::DiscardEditorProgress() const
 	}
 }
 
-void AN3DNonogram::StoreEditorProgress() const
+void AN3DNonogram::StoreEditorProgress(const FString& NonogramName) const
 {
 	if (Mode != EGameMode::Editor)
 	{
@@ -165,7 +165,7 @@ void AN3DNonogram::StoreEditorProgress() const
 	{
 		if (UN3DSaveSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<UN3DSaveSubsystem>())
 		{
-			SaveGameSubsystem->StoreEditorProgress(CurrentSize, CurrentSolution);
+			SaveGameSubsystem->StoreEditorProgress(NonogramName, CurrentSize, CurrentSolution);
 		}
 	}
 }
@@ -455,9 +455,10 @@ void AN3DNonogram::OnGameModeChanged(const EGameMode NewMode, const EGameMode Pr
 		{
 			if (UN3DSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UN3DSaveSubsystem>())
 			{
+				FString NonogramName;
 				FIntVector SavedSize;
 				TMap<int32, FColor> SavedSolution;
-				if (SaveSubsystem->GetSavedEditorProgress(SavedSize, SavedSolution))
+				if (SaveSubsystem->GetSavedEditorProgress(NonogramName, SavedSize, SavedSolution))
 				{
 					Resize(SavedSize);
 					CurrentSolution.Append(SavedSolution); // Current solution is reset in Resize call

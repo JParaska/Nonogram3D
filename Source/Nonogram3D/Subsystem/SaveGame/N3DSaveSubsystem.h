@@ -35,7 +35,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Nonograms")
 	TMap<FString, FNonogram> DownloadedNonograms;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Nonograms")
+	UPROPERTY(BlueprintReadOnly, Category = "SaveGame")
 	TObjectPtr<UN3DSaveGame> SaveGame;
 	
 public:
@@ -56,6 +56,8 @@ public:
 	TMap<FString, FNonogram> GetMyCreatedNonograms() const { return MyCreatedNonograms; }
 
 	bool IsValidIndex(const int SolutionIndex, const ENonogramType SolutionType) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Nonograms")
 	bool GetNonogram(const int Index, const ENonogramType Type, FNonogram& Nonogram) const;
 
 	void NonogramSolved(const int Index, const ENonogramType Type, const float SolvingTime);
@@ -90,7 +92,8 @@ public:
 	* Stores current editor progress in save file.
 	* This DOESN'T save data on disk.
 	*/
-	void StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution);
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	void StoreEditorProgress(const FString& NonogramName, const FIntVector& Size, const TMap<int32, FColor> EditorSolution);
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	bool IsNonogramInProgress(const int Index, const ENonogramType Type) const;
@@ -104,15 +107,15 @@ public:
 	bool IsEditorInProgress() const;
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool GetSavedEditorProgress(FIntVector& Size, TMap<int32, FColor>& EditorSolution) const;
+	bool GetSavedEditorProgress(FString& NonogramName, FIntVector& Size, TMap<int32, FColor>& EditorSolution) const; // TODO when FNonogram will no longer use a data table. Can I use that data structure directly?
 
-	/**
-	* Merges nonograms loaded from drive with already known ones
-	*/
 	void ResolveCreatedNonograms();
 
 	void ResolveDownloadedNonograms();
 
+	/**
+	* Merges nonograms loaded from drive with already known ones
+	*/
 	void ResolveNonogramsFromDrive(const FString& Directory, TArray<FSavedCreatedNonogramsInfo>& SaveGameInfo, TMap<FString, FNonogram>& LoadedData);
 
 	void ResolveNonogramSolvingProgressForDeletedNonogram(const int Index, const ENonogramType Type);

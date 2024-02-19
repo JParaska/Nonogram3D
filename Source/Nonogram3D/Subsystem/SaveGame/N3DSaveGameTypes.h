@@ -85,6 +85,9 @@ struct FSavedEditorProgress
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FString NonogramName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FIntVector Size = FIntVector::NoneValue;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

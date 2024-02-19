@@ -282,13 +282,14 @@ bool UN3DSaveSubsystem::DeleteNonogram(const int Index, const ENonogramType Type
 	return bDeleted;
 }
 
-void UN3DSaveSubsystem::StoreEditorProgress(const FIntVector& Size, const TMap<int32, FColor> EditorSolution)
+void UN3DSaveSubsystem::StoreEditorProgress(const FString& NonogramName, const FIntVector& Size, const TMap<int32, FColor> EditorSolution)
 {
 	if (SaveGame)
 	{
 		SaveGame->EditorProgress.Reset();
 
 		FSavedEditorProgress EditorProgress;
+		EditorProgress.NonogramName = NonogramName;
 		EditorProgress.Size = Size;
 		EditorProgress.Solution = EditorSolution;
 
@@ -333,10 +334,11 @@ bool UN3DSaveSubsystem::IsEditorInProgress() const
 	return SaveGame && SaveGame->EditorProgress.IsSet();
 }
 
-bool UN3DSaveSubsystem::GetSavedEditorProgress(FIntVector& Size, TMap<int32, FColor>& EditorSolution) const
+bool UN3DSaveSubsystem::GetSavedEditorProgress(FString& NonogramName, FIntVector& Size, TMap<int32, FColor>& EditorSolution) const
 {
 	if (SaveGame && SaveGame->EditorProgress.IsSet())
 	{
+		NonogramName = SaveGame->EditorProgress.NonogramName;
 		Size = SaveGame->EditorProgress.Size;
 
 		EditorSolution.Reset();

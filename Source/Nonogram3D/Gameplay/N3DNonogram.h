@@ -156,7 +156,7 @@ public:
 	* This DOESN'T save data on disk.
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Nonogram|Nonogram Editor")
-	void StoreEditorProgress() const;
+	void StoreEditorProgress(const FString& NonogramName) const;
 #pragma endregion
 
 #pragma region NonogramSolving
